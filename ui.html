@@ -1,0 +1,1443 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>ExportEase</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 12px;
+      line-height: 1.4;
+      color: #fff;
+      background: #21252b;
+      padding: 16px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .plugin-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+
+    .plugin-description {
+      font-size: 11px;
+      color: #b0b0b0;
+      line-height: 1.3;
+    }
+
+    .content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .export-status {
+      padding: 12px;
+      border-radius: 6px;
+      border: 1px solid var(--figma-color-border);
+      background: var(--figma-color-bg-secondary);
+      transition: all 0.2s ease;
+    }
+
+    .export-status.available {
+      background: #e6f9f0;
+      color: #177a4d;
+      border: 1.5px solid #3ecf8e;
+    }
+
+    .export-status.available .status-icon {
+      color: #177a4d;
+    }
+
+    .export-status.unavailable {
+      background: #fff3cd;
+      border-color: #ffeeba;
+      color: #856404;
+    }
+
+    .export-status.unavailable .status-icon {
+      color: #856404;
+    }
+
+    .status-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .status-icon {
+      font-size: 16px;
+    }
+
+    .status-title {
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .status-breakdown {
+      font-size: 10px;
+      opacity: 0.8;
+      line-height: 1.4;
+    }
+
+    .export-formats {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .format-section {
+      border: 1px solid #3a3e47;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .format-header {
+      background: #2a2e36;
+      padding: 8px 12px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #fff;
+      border-bottom: 1px solid #3a3e47;
+    }
+
+    .format-buttons {
+      padding: 8px;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+    }
+
+    .format-buttons:has([data-source]) {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .format-btn {
+      height: 32px;
+      border: 1px solid #4a4e57;
+      border-radius: 4px;
+      background: #333740;
+      color: #fff;
+      font-family: inherit;
+      font-size: 10px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    .format-btn:hover:not(:disabled) {
+      background: #3d4149;
+      border-color: #5a5e67;
+    }
+
+    .format-btn:disabled {
+      background: #2a2e36;
+      color: #666;
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    .format-btn.primary {
+      background: #d2145a;
+      border-color: #d2145a;
+    }
+
+    .format-btn.primary:hover:not(:disabled) {
+      background: #b3124a;
+      border-color: #b3124a;
+    }
+
+    .action-btn.primary {
+      background: #d2145a;
+      border-color: #d2145a;
+    }
+
+    .action-btn.primary:hover:not(:disabled) {
+      background: #b3124a;
+      border-color: #b3124a;
+    }
+
+    .format-btn.success {
+      background: #28a745;
+      border-color: #28a745;
+    }
+
+    .format-btn.success:hover:not(:disabled) {
+      background: #1e7e34;
+      border-color: #1e7e34;
+    }
+
+    .result-message {
+      padding: 12px;
+      border-radius: 6px;
+      font-size: 11px;
+      margin-bottom: 12px;
+      animation: slideIn 0.2s ease;
+      display: none;
+    }
+
+    .result-success {
+      background: #e6f9f0;
+      color: #177a4d;
+      border: 1px solid #3ecf8e;
+    }
+
+    .result-error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    .result-info {
+      background: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-4px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .loading {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    .export-preview {
+      background: #2a2e36;
+      border: 1px solid #3a3e47;
+      border-radius: 6px;
+      padding: 12px;
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+      font-size: 10px;
+      line-height: 1.4;
+      color: #e6e6e6;
+      max-height: 200px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+      display: none;
+    }
+
+    .export-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .action-btn {
+      height: 32px;
+      border: 1px solid #4a4e57;
+      border-radius: 4px;
+      background: #333740;
+      color: #fff;
+      font-family: inherit;
+      font-size: 10px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .action-btn:hover:not(:disabled) {
+      background: #3d4149;
+      border-color: #5a5e67;
+    }
+
+    .action-btn:disabled {
+      background: #2a2e36;
+      color: #666;
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    .preview-header {
+      margin-bottom: 8px;
+    }
+
+    .preview-title {
+      font-size: 10px;
+      font-weight: 600;
+      color: #b0b0b0;
+    }
+
+    .footer {
+      text-align: center;
+      color: #888;
+      font-size: 12px;
+      margin-top: 20px;
+      padding: 18px 0 0 0;
+      letter-spacing: 0.5px;
+      border-top: 1.5px solid #23272f;
+      box-shadow: 0 -2px 8px 0 rgba(33,37,43,0.12);
+      background: none;
+      width: 100%;
+      position: static;
+      left: unset;
+      bottom: unset;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 48px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .progress-toast {
+      position: fixed;
+      bottom: 16px;
+      left: 16px;
+      right: 16px;
+      background: #2a2e36;
+      border: 1px solid #3a3e47;
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      z-index: 1000;
+      display: none;
+      animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp {
+      from {
+        transform: translateY(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .progress-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .progress-cancel {
+      background: #dc3545;
+      border: 1px solid #dc3545;
+      border-radius: 4px;
+      color: #fff;
+      font-size: 10px;
+      padding: 4px 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .progress-cancel:hover {
+      background: #c82333;
+      border-color: #c82333;
+    }
+
+    .progress-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .progress-count {
+      font-size: 11px;
+      color: #b0b0b0;
+    }
+
+    .progress-percentage {
+      font-size: 11px;
+      font-weight: 600;
+      color: #28a745;
+    }
+
+    .progress-bar-container {
+      background: #3a3e47;
+      border-radius: 4px;
+      height: 6px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      background: linear-gradient(90deg, #28a745, #20c997);
+      height: 100%;
+      width: 0%;
+      transition: width 0.3s ease;
+      border-radius: 4px;
+    }
+  </style>
+  <link href="https://fonts.googleapis.com/css?family=Inter:400,500,600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="header">
+    <div class="plugin-title">📦 ExportEase</div>
+    <div class="plugin-description">Export your local styles and variables to developer-friendly formats including CSS, SCSS, Tailwind, and JSON.</div>
+  </div>
+
+  <div class="content">
+    <div id="exportStatus" class="export-status" role="status" aria-live="polite">
+      <div class="status-header">
+        <span class="status-icon" aria-hidden="true">🔍</span>
+        <div class="status-title">Scanning for exports...</div>
+      </div>
+      <div class="status-breakdown">Checking local styles and variables...</div>
+    </div>
+
+    <div id="resultMessage" class="result-message" role="alert" aria-live="assertive"></div>
+
+    <div id="exportSource" class="export-formats hidden">
+      <div class="format-section">
+        <div class="format-header">🎯 Export Source</div>
+        <div class="format-buttons">
+          <button class="format-btn" data-source="styles" title="Export Local Styles">
+            Local Styles
+          </button>
+          <button class="format-btn" data-source="variables" title="Export Local Variables">
+            Local Variables
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="exportFormats" class="export-formats hidden">
+      <div class="format-section">
+        <div class="format-header">📤 Export Formats</div>
+        <div class="format-buttons">
+          <button class="format-btn" data-format="css" title="CSS Custom Properties">
+            CSS Variables
+          </button>
+          <button class="format-btn" data-format="scss" title="Sass Variables">
+            Sass
+          </button>
+          <button class="format-btn" data-format="tailwind" title="Tailwind CSS Config">
+            Tailwind CSS
+          </button>
+          <button class="format-btn" data-format="dart" title="Dart/Flutter Constants">
+            Dart
+          </button>
+          <button class="format-btn" data-format="json" title="JSON Data Export">
+            JSON
+          </button>
+          <button class="format-btn" data-format="js" title="JavaScript Constants">
+            JavaScript
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="exportActions" class="export-actions hidden">
+      <button class="action-btn" id="copyBtn" disabled>Copy</button>
+      <button class="action-btn" id="downloadBtn" disabled>Export</button>
+    </div>
+
+    <div id="exportPreview" class="export-preview">
+      <div class="preview-header">
+        <div class="preview-title" id="previewTitle">Export Preview</div>
+      </div>
+      <div id="previewContent"></div>
+    </div>
+  </div>
+
+  <div class="footer">Powered by <span style="margin-left:4px;"><a href="https://sepantapouya.com" target="_blank" rel="noopener" style="color:#888; text-decoration:underline;">Sepanta Pouya</a></span></div>
+
+  <!-- Progress Toast -->
+  <div id="progressToast" class="progress-toast">
+    <div class="progress-header">
+      <div class="progress-title">Exporting styles...</div>
+      <button id="cancelExport" class="progress-cancel">Cancel</button>
+    </div>
+    <div class="progress-info">
+      <div id="progressCount" class="progress-count">0 of 0 items processed</div>
+      <div id="progressPercentage" class="progress-percentage">0%</div>
+    </div>
+    <div class="progress-bar-container">
+      <div id="progressBar" class="progress-bar"></div>
+    </div>
+  </div>
+
+  <!-- Lightweight ZIP implementation for real ZIP files -->
+  <script>
+    // Real ZIP file implementation using minimal ZIP format
+    window.JSZip = (function() {
+      function SimpleZip() {
+        this.files = {};
+      }
+      
+      SimpleZip.prototype.file = function(name, content) {
+        this.files[name] = content;
+        return this;
+      };
+      
+      SimpleZip.prototype.generateAsync = function(options) {
+        return new Promise((resolve, reject) => {
+          try {
+            const files = Object.entries(this.files);
+            const chunks = [];
+            const centralDirectory = [];
+            let offset = 0;
+            
+            // Create local file headers and data for each file
+            files.forEach(([filename, content]) => {
+              const data = new TextEncoder().encode(content);
+              const filenameBytes = new TextEncoder().encode(filename);
+              const crc32 = calculateCRC32(data);
+              
+              // Local file header
+              const localHeader = new ArrayBuffer(30 + filenameBytes.length);
+              const view = new DataView(localHeader);
+              
+              view.setUint32(0, 0x04034b50, true); // Local file header signature
+              view.setUint16(4, 20, true); // Version needed to extract
+              view.setUint16(6, 0, true); // General purpose bit flag
+              view.setUint16(8, 0, true); // Compression method (stored)
+              view.setUint16(10, 0, true); // Last mod file time
+              view.setUint16(12, 0, true); // Last mod file date
+              view.setUint32(14, crc32, true); // CRC-32
+              view.setUint32(18, data.length, true); // Compressed size
+              view.setUint32(22, data.length, true); // Uncompressed size
+              view.setUint16(26, filenameBytes.length, true); // File name length
+              view.setUint16(28, 0, true); // Extra field length
+              
+              // Add filename to header
+              new Uint8Array(localHeader, 30).set(filenameBytes);
+              
+              chunks.push(new Uint8Array(localHeader));
+              chunks.push(data);
+              
+              // Store info for central directory
+              centralDirectory.push({
+                filename: filenameBytes,
+                crc32: crc32,
+                size: data.length,
+                offset: offset
+              });
+              
+              offset += localHeader.byteLength + data.length;
+            });
+            
+            const centralDirStart = offset;
+            
+            // Create central directory entries
+            centralDirectory.forEach(file => {
+              const centralHeader = new ArrayBuffer(46 + file.filename.length);
+              const view = new DataView(centralHeader);
+              
+              view.setUint32(0, 0x02014b50, true); // Central directory signature
+              view.setUint16(4, 20, true); // Version made by
+              view.setUint16(6, 20, true); // Version needed to extract
+              view.setUint16(8, 0, true); // General purpose bit flag
+              view.setUint16(10, 0, true); // Compression method
+              view.setUint16(12, 0, true); // Last mod file time
+              view.setUint16(14, 0, true); // Last mod file date
+              view.setUint32(16, file.crc32, true); // CRC-32
+              view.setUint32(20, file.size, true); // Compressed size
+              view.setUint32(24, file.size, true); // Uncompressed size
+              view.setUint16(28, file.filename.length, true); // File name length
+              view.setUint16(30, 0, true); // Extra field length
+              view.setUint16(32, 0, true); // File comment length
+              view.setUint16(34, 0, true); // Disk number start
+              view.setUint16(36, 0, true); // Internal file attributes
+              view.setUint32(38, 0, true); // External file attributes
+              view.setUint32(42, file.offset, true); // Relative offset of local header
+              
+              new Uint8Array(centralHeader, 46).set(file.filename);
+              chunks.push(new Uint8Array(centralHeader));
+            });
+            
+            const centralDirSize = offset - centralDirStart + centralDirectory.reduce((sum, file) => sum + 46 + file.filename.length, 0);
+            
+            // End of central directory record
+            const endRecord = new ArrayBuffer(22);
+            const endView = new DataView(endRecord);
+            
+            endView.setUint32(0, 0x06054b50, true); // End of central dir signature
+            endView.setUint16(4, 0, true); // Number of this disk
+            endView.setUint16(6, 0, true); // Number of disk with start of central directory
+            endView.setUint16(8, files.length, true); // Total number of entries on this disk
+            endView.setUint16(10, files.length, true); // Total number of entries
+            endView.setUint32(12, centralDirSize, true); // Size of central directory
+            endView.setUint32(16, centralDirStart, true); // Offset of start of central directory
+            endView.setUint16(20, 0, true); // ZIP file comment length
+            
+            chunks.push(new Uint8Array(endRecord));
+            
+            const blob = new Blob(chunks, { type: 'application/zip' });
+            resolve(blob);
+          } catch (error) {
+            reject(error);
+          }
+        });
+      };
+      
+      // Simple CRC32 implementation
+      function calculateCRC32(data) {
+        let crc = 0xFFFFFFFF;
+        const table = [];
+        
+        // Generate CRC table
+        for (let i = 0; i < 256; i++) {
+          let c = i;
+          for (let j = 0; j < 8; j++) {
+            c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+          }
+          table[i] = c;
+        }
+        
+        // Calculate CRC
+        for (let i = 0; i < data.length; i++) {
+          crc = table[(crc ^ data[i]) & 0xFF] ^ (crc >>> 8);
+        }
+        
+        return (crc ^ 0xFFFFFFFF) >>> 0;
+      }
+      
+      return SimpleZip;
+    })();
+    
+    // Check if JSZip loaded successfully
+    window.addEventListener('load', function() {
+      console.log('Page loaded. JSZip available:', typeof JSZip !== 'undefined');
+      if (typeof JSZip !== 'undefined') {
+        console.log('JSZip (real ZIP implementation) loaded successfully');
+      }
+    });
+  </script>
+  
+  <script>
+    // UI Elements
+    const exportStatus = document.getElementById('exportStatus');
+    const exportSource = document.getElementById('exportSource');
+    const exportFormats = document.getElementById('exportFormats');
+    const exportActions = document.getElementById('exportActions');
+    const resultMessage = document.getElementById('resultMessage');
+    const exportPreview = document.getElementById('exportPreview');
+    const previewTitle = document.getElementById('previewTitle');
+    const previewContent = document.getElementById('previewContent');
+    const copyBtn = document.getElementById('copyBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const progressToast = document.getElementById('progressToast');
+    const progressCount = document.getElementById('progressCount');
+    const progressPercentage = document.getElementById('progressPercentage');
+    const progressBar = document.getElementById('progressBar');
+    const progressTitle = document.querySelector('.progress-title');
+    const cancelExportBtn = document.getElementById('cancelExport');
+
+    let hasExports = false;
+    let hasStyles = false;
+    let hasVariables = false;
+    let currentExportContent = '';
+    let currentFilename = '';
+    let currentFormat = '';
+    let currentSource = 'variables';
+    let exportCanceled = false;
+
+    // Event listeners
+    document.querySelectorAll('.format-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (!btn.disabled) {
+          if (btn.dataset.source) {
+            // Source selection
+            currentSource = btn.dataset.source;
+            updateSourceSelection(btn.dataset.source);
+          } else if (btn.dataset.format) {
+            // Format selection
+            exportToFormat(btn.dataset.format);
+          }
+        }
+      });
+    });
+
+    copyBtn.addEventListener('click', () => {
+      if (window.currentMultiFileExport) {
+        // Multi-file exports should not be copyable - this shouldn't happen due to disabled state
+        return;
+      } else if (currentExportContent) {
+        navigator.clipboard.writeText(currentExportContent).then(() => {
+          showToast('Copied to clipboard!', 'success');
+        }).catch(() => {
+          showResult('Failed to copy to clipboard', 'error');
+        });
+      }
+    });
+
+    downloadBtn.addEventListener('click', () => {
+      console.log('=== DOWNLOAD BUTTON CLICKED ===');
+      console.log('currentMultiFileExport:', !!window.currentMultiFileExport);
+      console.log('currentMultiFileExport details:', window.currentMultiFileExport);
+      console.log('currentExportContent:', !!currentExportContent);
+      console.log('currentFilename:', currentFilename);
+      
+      if (window.currentMultiFileExport) {
+        console.log('Processing multi-file download...');
+        // Handle multi-file download
+        const { files, format } = window.currentMultiFileExport;
+        downloadMultipleFiles(files, format);
+      } else if (currentExportContent && currentFilename) {
+        console.log('Processing single-file download...');
+        downloadFile(currentExportContent, currentFilename);
+      } else {
+        // Debug info for troubleshooting
+        console.log('Download failed - Debug info:', {
+          hasMultiFileExport: !!window.currentMultiFileExport,
+          hasCurrentContent: !!currentExportContent,
+          hasCurrentFilename: !!currentFilename,
+          currentFormat: currentFormat,
+          contentLength: currentExportContent ? currentExportContent.length : 0
+        });
+        
+        showResult('No content to download. Please try exporting again.', 'error');
+        
+        // Reset UI state to allow retry
+        setLoading(false);
+        enableExportButtons();
+      }
+    });
+
+    cancelExportBtn.addEventListener('click', () => {
+      exportCanceled = true;
+      parent.postMessage({ pluginMessage: { type: 'cancel-export' } }, '*');
+      hideProgressToast();
+      showResult('Export canceled', 'info');
+      enableExportButtons();
+    });
+
+    // Handle messages from plugin code
+    window.onmessage = (event) => {
+      const msg = event.data.pluginMessage;
+      
+      switch (msg.type) {
+        case 'export-status':
+          updateExportStatus(msg.hasExports, msg.stylesCount, msg.variablesCount, msg.breakdown);
+          break;
+        case 'export-ready':
+          hideProgressToast();
+          if (msg.content && msg.filename && msg.format) {
+            showExportPreview(msg.content, msg.filename, msg.format);
+          } else {
+            console.error('Invalid export-ready message:', msg);
+            showResult('Export failed: Invalid data received from plugin', 'error');
+            setLoading(false);
+            enableExportButtons();
+          }
+          break;
+        case 'export-multi-file':
+          console.log('=== RECEIVED MULTI-FILE MESSAGE ===');
+          console.log('Message:', msg);
+          console.log('Files count:', msg.files ? Object.keys(msg.files).length : 'undefined');
+          console.log('Format:', msg.format);
+          
+          hideProgressToast();
+          if (msg.files && msg.format && Object.keys(msg.files).length > 0) {
+                    console.log('Calling showMultiFileExport...');
+        showMultiFileExport(msg.format, msg.fileCount, msg.files, null, msg.instructions);
+          } else {
+            console.error('Invalid export-multi-file message:', msg);
+            showResult('Export failed: No files generated', 'error');
+            setLoading(false);
+            enableExportButtons();
+          }
+          break;
+        case 'export-start':
+          showProgressToast(msg.total, msg.title);
+          break;
+        case 'export-progress':
+          updateProgress(msg.current, msg.total, msg.percentage);
+          break;
+        case 'error':
+          hideProgressToast();
+          showResult(msg.message, 'error');
+          setLoading(false);
+          enableExportButtons();
+          break;
+      }
+    };
+
+    function updateExportStatus(hasExportsAvailable, stylesCount, variablesCount, breakdown) {
+      hasExports = hasExportsAvailable;
+      hasStyles = stylesCount > 0;
+      hasVariables = variablesCount > 0;
+      
+      const statusIcon = exportStatus.querySelector('.status-icon');
+      const statusTitle = exportStatus.querySelector('.status-title');
+      const statusBreakdown = exportStatus.querySelector('.status-breakdown');
+      
+      if (hasExports) {
+        exportStatus.className = 'export-status available';
+        statusIcon.textContent = '✅';
+        statusTitle.textContent = `Ready to export (${stylesCount + variablesCount} items)`;
+        
+        let breakdownText = '';
+        if (breakdown.paintStyles > 0) breakdownText += `${breakdown.paintStyles} paint styles, `;
+        if (breakdown.textStyles > 0) breakdownText += `${breakdown.textStyles} text styles, `;
+        if (breakdown.effectStyles > 0) breakdownText += `${breakdown.effectStyles} effect styles, `;
+        if (breakdown.variables > 0) breakdownText += `${breakdown.variables} variables`;
+        
+        // Remove trailing comma and space
+        breakdownText = breakdownText.replace(/, $/, '');
+        statusBreakdown.textContent = breakdownText;
+        
+        // Show export source selection
+        exportSource.classList.remove('hidden');
+        updateSourceAvailability();
+        
+        // Show export formats
+        exportFormats.classList.remove('hidden');
+        
+        // Enable format buttons
+        document.querySelectorAll('[data-format]').forEach(btn => {
+          btn.disabled = false;
+        });
+        
+      } else {
+        exportStatus.className = 'export-status unavailable';
+        statusIcon.textContent = '⚠️';
+        statusTitle.textContent = 'No exports available';
+        statusBreakdown.textContent = 'Create some local styles or variables first, then refresh this plugin.';
+        
+        // Hide export options
+        exportSource.classList.add('hidden');
+        exportFormats.classList.add('hidden');
+      }
+    }
+
+    function updateSourceAvailability() {
+      const stylesBtn = document.querySelector('[data-source="styles"]');
+      const variablesBtn = document.querySelector('[data-source="variables"]');
+      
+      if (stylesBtn) stylesBtn.disabled = !hasStyles;
+      if (variablesBtn) variablesBtn.disabled = !hasVariables;
+      
+      // Set default selection to the first available option
+      if (hasVariables) {
+        updateSourceSelection('variables');
+      } else if (hasStyles) {
+        updateSourceSelection('styles');
+      }
+    }
+
+    function updateSourceSelection(source) {
+      currentSource = source;
+      
+      // Reset all source buttons
+      document.querySelectorAll('[data-source]').forEach(btn => {
+        btn.classList.remove('success');
+      });
+      
+      // Highlight selected source
+      const selectedBtn = document.querySelector(`[data-source="${source}"]`);
+      if (selectedBtn && !selectedBtn.disabled) {
+        selectedBtn.classList.add('success');
+      }
+    }
+
+    function exportToFormat(format) {
+      if (!hasExports) {
+        showResult('No exports available', 'error');
+        return;
+      }
+      
+      if (!currentSource) {
+        showResult('Please select an export source first', 'error');
+        return;
+      }
+      
+      setLoading(true);
+      currentFormat = format;
+      exportCanceled = false;
+      
+      // Reset previous export state
+      exportPreview.style.display = 'none';
+      exportActions.classList.add('hidden');
+      
+      // Disable all export buttons
+      disableExportButtons();
+      
+      // Send export request
+      parent.postMessage({ 
+        pluginMessage: { 
+          type: 'export', 
+          format: format,
+          source: currentSource
+        } 
+      }, '*');
+    }
+
+    function getOriginalButtonText(format) {
+      if (!format) return 'Export';
+      
+      const formatNames = {
+        'css': 'CSS Variables',
+        'scss': 'Sass',
+        'tailwind': 'Tailwind CSS',
+        'dart': 'Dart',
+        'json': 'JSON',
+        'js': 'JavaScript'
+      };
+      return formatNames[format] || format.toString().toUpperCase();
+    }
+
+    function getFormatDisplayName(format) {
+      const formatNames = {
+        'css': 'CSS Variables',
+        'scss': 'Sass',
+        'tailwind': 'Tailwind CSS',
+        'dart': 'Dart',
+        'json': 'JSON',
+        'js': 'JavaScript'
+      };
+      return formatNames[format] || format.toUpperCase();
+    }
+
+    function showExportPreview(content, filename, format) {
+      currentExportContent = content;
+      currentFilename = filename;
+      currentFormat = format;
+      
+      const displayName = getFormatDisplayName(format);
+      previewTitle.textContent = `${filename} (${displayName})`;
+      previewContent.textContent = content.substring(0, 2000) + (content.length > 2000 ? '\n\n... (truncated for preview)' : '');
+      
+      exportPreview.style.display = 'block';
+      exportActions.classList.remove('hidden');
+      
+      // Reset and enable action buttons for single file
+      copyBtn.textContent = 'Copy';
+      copyBtn.disabled = false;
+      copyBtn.title = '';
+      downloadBtn.textContent = 'Export';
+      downloadBtn.disabled = false;
+      
+      // Enable export buttons
+      enableExportButtons();
+      
+      // Highlight current button
+      const formatBtn = document.querySelector(`[data-format="${format}"]`);
+      if (formatBtn) {
+        formatBtn.classList.add('success');
+      }
+      
+      setLoading(false);
+      
+      // Show success message with file size info
+      const sizeKB = Math.round(content.length / 1024);
+      showResult(`Export ready! Generated ${sizeKB}KB of ${displayName} code.`, 'success');
+    }
+
+    function showMultiFileExport(format, fileCount, files, primaryFile, instructions) {
+      console.log('=== SHOW MULTI-FILE EXPORT CALLED ===');
+      console.log('Format:', format);
+      console.log('File count:', fileCount);
+      console.log('Files:', Object.keys(files));
+      console.log('Primary file:', primaryFile);
+      
+      // Store multi-file data globally
+      window.currentMultiFileExport = {
+        format: format,
+        fileCount: fileCount,
+        files: files,
+        primaryFile: primaryFile || Object.keys(files)[0], // fallback to first file
+        instructions: instructions
+      };
+      
+      console.log('Stored currentMultiFileExport:', !!window.currentMultiFileExport);
+      
+      currentFormat = format;
+      const displayName = getFormatDisplayName(format);
+      
+      // Show the first file in preview (since we don't use primaryFile anymore)
+      const fileNames = Object.keys(files);
+      const firstFileName = fileNames[0];
+      const firstFileContent = files[firstFileName];
+      previewTitle.textContent = `${displayName} Export (${fileCount} files)`;
+      
+      // Create a preview that shows file structure
+      let previewText = `/* ${displayName} Export - ${fileCount} Files Generated */\n\n`;
+      previewText += `${instructions}\n\n`;
+      previewText += `FILES:\n`;
+      fileNames.forEach(filename => {
+        const size = Math.round(files[filename].length / 1024);
+        previewText += `• ${filename} (${size}KB)\n`;
+      });
+      previewText += `\n${'='.repeat(50)}\n`;
+      previewText += `PREVIEW OF: ${firstFileName}\n`;
+      previewText += `${'='.repeat(50)}\n\n`;
+      previewText += firstFileContent.substring(0, 1500);
+      if (firstFileContent.length > 1500) {
+        previewText += '\n\n... (truncated for preview)';
+      }
+      
+      previewContent.textContent = previewText;
+      
+      exportPreview.style.display = 'block';
+      exportActions.classList.remove('hidden');
+      
+      // Update button text to show multi-file download
+      copyBtn.textContent = 'Copy';
+      copyBtn.disabled = true;
+      copyBtn.title = 'Copy is disabled for multiple files. Use Download ZIP instead.';
+      downloadBtn.textContent = 'Download ZIP';
+      
+      // Enable download button only
+      downloadBtn.disabled = false;
+      
+      // Enable export buttons (but don't clear multi-file data)
+      document.querySelectorAll('.format-btn').forEach(btn => {
+        btn.disabled = false;
+        btn.classList.remove('success', 'primary');
+        if (btn.dataset.format) {
+          const originalText = getOriginalButtonText(btn.dataset.format);
+          btn.textContent = originalText;
+        }
+      });
+      
+      // Highlight current button
+      const formatBtn = document.querySelector(`[data-format="${format}"]`);
+      if (formatBtn) {
+        formatBtn.classList.add('success');
+      }
+      
+      setLoading(false);
+      
+      // Show success message
+      const totalSize = Object.values(files).reduce((sum, content) => sum + content.length, 0);
+      const totalSizeKB = Math.round(totalSize / 1024);
+      showResult(`Export ready! Generated ${fileCount} ${displayName} files (${totalSizeKB}KB total).`, 'success');
+    }
+
+    function downloadFile(content, filename) {
+      try {
+        const blob = new Blob([content], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showResult(`${filename} downloaded successfully!`, 'success');
+      } catch (error) {
+        showResult('Failed to download file', 'error');
+      }
+    }
+
+    function downloadMultipleFiles(files, format) {
+      try {
+        // Create a zip file for multiple files
+        createZipAndDownload(files, format);
+      } catch (error) {
+        showResult('Failed to download files', 'error');
+      }
+    }
+
+    function createZipAndDownload(files, format) {
+      console.log('=== ZIP CREATION DEBUG ===');
+      console.log('JSZip available:', typeof JSZip !== 'undefined');
+      console.log('JSZip object:', typeof JSZip !== 'undefined' ? JSZip : 'undefined');
+      
+      if (typeof JSZip === 'undefined') {
+        console.log('JSZip not available, using fallback archive');
+        // Fallback to simple archive if JSZip is not available
+        createSimpleArchive(files, format);
+        return;
+      }
+
+      try {
+        const zip = new JSZip();
+        
+        // Add each file to the zip
+        Object.entries(files).forEach(([filename, content]) => {
+          zip.file(filename, content);
+        });
+        
+        // Add a README file with instructions
+        const fileNames = Object.keys(files);
+        const hasSemanticTokens = fileNames.some(name => name.includes('semantic'));
+        const hasPrimitiveTokens = fileNames.some(name => name.includes('primitive'));
+        
+        // Generate dynamic import order based on actual files
+        const importOrder = [];
+        const cssImports = [];
+        const htmlLinks = [];
+        const jsImports = [];
+        const scssImports = [];
+        
+        // Add primitive tokens first (if they exist)
+        fileNames.filter(name => name.includes('primitive')).forEach(name => {
+          importOrder.push(name);
+          cssImports.push(`@import './${name}';`);
+          htmlLinks.push(`<link rel="stylesheet" href="./tokens/${name}">`);
+          jsImports.push(`import './tokens/${name}';`);
+          if (name.endsWith('.scss')) {
+            scssImports.push(`@import 'tokens/${name.replace('.scss', '')}';`);
+          }
+        });
+        
+        // Add private/internal tokens next
+        fileNames.filter(name => name.includes('private') || name.includes('internal')).forEach(name => {
+          if (!importOrder.includes(name)) {
+            importOrder.push(name);
+            cssImports.push(`@import './${name}';`);
+            htmlLinks.push(`<link rel="stylesheet" href="./tokens/${name}">`);
+            jsImports.push(`import './tokens/${name}';`);
+            if (name.endsWith('.scss')) {
+              scssImports.push(`@import 'tokens/${name.replace('.scss', '')}';`);
+            }
+          }
+        });
+        
+        // Add semantic tokens last (if they exist)
+        fileNames.filter(name => name.includes('semantic')).forEach(name => {
+          if (!importOrder.includes(name)) {
+            importOrder.push(name);
+            cssImports.push(`@import './${name}';`);
+            htmlLinks.push(`<link rel="stylesheet" href="./tokens/${name}">`);
+            jsImports.push(`import './tokens/${name}';`);
+            if (name.endsWith('.scss')) {
+              scssImports.push(`@import 'tokens/${name.replace('.scss', '')}';`);
+            }
+          }
+        });
+        
+        // Add any remaining files
+        fileNames.forEach(name => {
+          if (!importOrder.includes(name)) {
+            importOrder.push(name);
+            cssImports.push(`@import './${name}';`);
+            htmlLinks.push(`<link rel="stylesheet" href="./tokens/${name}">`);
+            jsImports.push(`import './tokens/${name}';`);
+            if (name.endsWith('.scss')) {
+              scssImports.push(`@import 'tokens/${name.replace('.scss', '')}';`);
+            }
+          }
+        });
+        
+        const readme = `FIGMA DESIGN TOKENS EXPORT
+Generated by ExportEase Plugin
+Author: Sepanta Pouya
+
+FILES INCLUDED:
+${fileNames.map(name => `- ${name}`).join('\n')}
+
+IMPORT INSTRUCTIONS:
+===============================================
+
+METHOD 1: CSS Imports (Recommended)
+-----------------------------------
+Add these imports to your main CSS file in this exact order:
+
+${cssImports.join('\n')}
+
+Then use the tokens in your styles:
+.button {
+  background-color: var(--color-primary);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-sm);
+}
+
+METHOD 2: HTML Link Tags
+------------------------
+Add these to your HTML <head> in this exact order:
+
+${htmlLinks.join('\n')}
+
+METHOD 3: JavaScript/TypeScript Import
+-------------------------------------
+For bundlers like Webpack, Vite, Parcel:
+
+${jsImports.join('\n')}
+
+FRAMEWORK EXAMPLES:
+==================
+
+React/Next.js:
+--------------
+// In pages/_app.js or layout.js
+${jsImports.map(imp => imp.replace('./tokens/', '../styles/tokens/')).join('\n')}
+
+Vue.js:
+-------
+// In main.js or App.vue
+${jsImports.map(imp => imp.replace('./tokens/', './assets/tokens/')).join('\n')}
+
+Angular:
+--------
+// In angular.json styles array:
+"styles": [
+${fileNames.filter(name => name.endsWith('.css')).map(name => `  "src/assets/tokens/${name}"`).join(',\n')},
+  "src/styles.css"
+]
+
+SCSS Projects:
+--------------
+// In your main SCSS file:
+${scssImports.length > 0 ? scssImports.join('\n') : '// No SCSS files in this export'}
+
+FILE ORGANIZATION:
+==================
+
+Recommended folder structure:
+your-project/
+├── src/
+│   ├── styles/
+│   │   ├── tokens/          ← Place extracted files here
+${fileNames.map(name => `│   │   │   ├── ${name}`).join('\n')}
+│   │   └── main.css
+│   └── components/
+└── package.json
+
+IMPORT ORDER MATTERS:
+====================
+Always import in this exact order:
+${importOrder.map((name, index) => `${index + 1}. ${name}`).join('\n')}
+
+This ensures tokens are available when referenced by other tokens.
+${hasSemanticTokens && hasPrimitiveTokens ? 'Primitive tokens must be loaded before semantic tokens that reference them.' : ''}
+
+USAGE EXAMPLES:
+===============
+
+Colors:
+.primary-button {
+  background-color: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+Spacing:
+.container {
+  padding: var(--spacing-lg);
+  margin: var(--spacing-md);
+}
+
+Typography:
+.heading {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+}
+
+TROUBLESHOOTING:
+================
+
+If tokens don't work:
+1. Check import order (primitives first, semantics last)
+2. Verify file paths are correct
+3. Ensure CSS files are loaded before use
+4. Check browser dev tools for CSS import errors
+
+For more help, visit: https://github.com/sepantapouya
+
+Generated on: ${new Date().toISOString()}
+Plugin Version: 1.0.0
+`;
+        zip.file('README.txt', readme);
+        
+        // Generate the archive file
+        zip.generateAsync({ type: 'blob' }).then(function(content) {
+          const url = URL.createObjectURL(content);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `figma-tokens-${format}.zip`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          
+          const fileCount = Object.keys(files).length;
+          showResult(`ZIP file with ${fileCount} ${getFormatDisplayName(format)} files downloaded!`, 'success');
+        }).catch(function(error) {
+          console.error('Archive creation failed:', error);
+          createSimpleArchive(files, format);
+        });
+        
+      } catch (error) {
+        console.error('JSZip error:', error);
+        createSimpleArchive(files, format);
+      }
+    }
+
+    function createSimpleArchive(files, format) {
+      // Fallback: Create a text file with all content separated
+      let archiveContent = `FIGMA TOKENS EXPORT ARCHIVE
+Generated by ExportEase Plugin
+Author: Sepanta Pouya
+
+INSTRUCTIONS:
+This archive contains multiple files. Copy each section between the markers into separate files.
+
+FILES INCLUDED:
+${Object.keys(files).map(name => `- ${name}`).join('\n')}
+
+${'='.repeat(80)}
+
+`;
+      
+      // Add each file to the archive
+      Object.entries(files).forEach(([filename, content]) => {
+        archiveContent += `\n${'='.repeat(20)} FILE: ${filename} ${'='.repeat(20)}\n`;
+        archiveContent += content;
+        archiveContent += `\n${'='.repeat(20)} END: ${filename} ${'='.repeat(20)}\n\n`;
+      });
+      
+      const blob = new Blob([archiveContent], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `figma-tokens-${format}-archive.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      const fileCount = Object.keys(files).length;
+      showResult(`Archive file with ${fileCount} ${getFormatDisplayName(format)} files downloaded!`, 'success');
+    }
+
+    function showResult(message, type) {
+      resultMessage.textContent = message;
+      resultMessage.className = `result-message result-${type}`;
+      resultMessage.style.display = 'block';
+      
+      // Hide after 4 seconds
+      setTimeout(() => {
+        resultMessage.style.display = 'none';
+      }, 4000);
+    }
+
+    function showToast(message, type = 'success') {
+      // Create toast element
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.textContent = message;
+      toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'success' ? '#4CAF50' : '#f44336'};
+        color: white;
+        padding: 12px 24px;
+        border-radius: 4px;
+        font-size: 14px;
+        z-index: 10000;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        transform: translateX(100%);
+        transition: transform 0.3s ease;
+      `;
+      
+      document.body.appendChild(toast);
+      
+      // Animate in
+      setTimeout(() => {
+        toast.style.transform = 'translateX(0)';
+      }, 10);
+      
+      // Auto-hide after 2 seconds
+      setTimeout(() => {
+        toast.style.transform = 'translateX(100%)';
+        setTimeout(() => {
+          if (toast.parentNode) {
+            toast.parentNode.removeChild(toast);
+          }
+        }, 300);
+      }, 2000);
+    }
+
+    function setLoading(loading) {
+      document.body.classList.toggle('loading', loading);
+    }
+
+    function showProgressToast(total, title = 'Exporting styles...') {
+      progressTitle.textContent = title;
+      progressCount.textContent = `0 of ${total} items processed`;
+      progressPercentage.textContent = '0%';
+      progressBar.style.width = '0%';
+      progressToast.style.display = 'block';
+    }
+
+    function updateProgress(current, total, percentage) {
+      if (exportCanceled) return;
+      
+      progressCount.textContent = `${current} of ${total} items processed`;
+      progressPercentage.textContent = `${percentage}%`;
+      progressBar.style.width = `${percentage}%`;
+    }
+
+    function hideProgressToast() {
+      progressToast.style.display = 'none';
+    }
+
+    function disableExportButtons() {
+      document.querySelectorAll('.format-btn').forEach(btn => {
+        btn.disabled = true;
+        btn.classList.remove('success', 'primary');
+        if (btn.dataset.format) {
+          const originalText = getOriginalButtonText(btn.dataset.format);
+          btn.textContent = originalText;
+        }
+      });
+    }
+
+    function enableExportButtons() {
+      console.log('=== ENABLE EXPORT BUTTONS CALLED ===');
+      console.log('Stack trace:', new Error().stack);
+      console.log('Clearing currentMultiFileExport...');
+      
+      document.querySelectorAll('.format-btn').forEach(btn => {
+        btn.disabled = false;
+        btn.classList.remove('success', 'primary');
+        if (btn.dataset.format) {
+          const originalText = getOriginalButtonText(btn.dataset.format);
+          btn.textContent = originalText;
+        }
+      });
+      
+      // Reset button text
+      copyBtn.textContent = 'Copy';
+      downloadBtn.textContent = 'Export';
+      
+      // Clear multi-file export data
+      window.currentMultiFileExport = null;
+    }
+
+    // Request initial export check
+    parent.postMessage({ pluginMessage: { type: 'check-exports' } }, '*');
+  </script>
+</body>
+</html> 

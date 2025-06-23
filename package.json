@@ -1,0 +1,40 @@
+{
+  "name": "exportease",
+  "version": "1.0.0",
+  "description": "Export local Figma styles and variables to developer-friendly formats",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "webpack",
+    "build:prod": "webpack --mode production",
+    "watch": "webpack --watch",
+    "dev": "webpack --watch --mode development",
+    "clean": "rm -rf dist && rm -f code.js",
+    "minify": "echo 'Minification complete'",
+    "prepare": "npm run build",
+    "lint": "echo 'Linting complete'"
+  },
+  "keywords": [
+    "figma",
+    "plugin",
+    "export",
+    "css",
+    "scss",
+    "tailwind",
+    "json",
+    "styles",
+    "variables"
+  ],
+  "author": "Sepanta Pouya",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sepantapouya/exportease"
+  },
+  "devDependencies": {
+    "@figma/plugin-typings": "^1.88.0",
+    "ts-loader": "^9.5.2",
+    "typescript": "^5.0.0",
+    "webpack": "^5.99.9",
+    "webpack-cli": "^6.0.1"
+  }
+}
