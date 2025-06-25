@@ -409,7 +409,7 @@
 <body>
   <div class="header">
     <div class="plugin-title">📦 ExportEase</div>
-    <div class="plugin-description">Export your local styles and variables to developer-friendly formats including CSS, SCSS, Tailwind, and JSON.</div>
+            <div class="plugin-description">Export your local styles and variables to developer-friendly formats including CSS, SCSS, Tailwind, and JavaScript.</div>
   </div>
 
   <div class="content">
@@ -450,12 +450,7 @@
           <button class="format-btn" data-format="tailwind" title="Tailwind CSS Config">
             Tailwind CSS
           </button>
-          <button class="format-btn" data-format="dart" title="Dart/Flutter Constants">
-            Dart
-          </button>
-          <button class="format-btn" data-format="json" title="JSON Data Export">
-            JSON
-          </button>
+
           <button class="format-btn" data-format="js" title="JavaScript Constants">
             JavaScript
           </button>
@@ -900,27 +895,21 @@
       }, '*');
     }
 
-    function getOriginalButtonText(format) {
-      if (!format) return 'Export';
-      
+    function getFormatName(format) {
       const formatNames = {
-        'css': 'CSS Variables',
-        'scss': 'Sass',
-        'tailwind': 'Tailwind CSS',
-        'dart': 'Dart',
-        'json': 'JSON',
+        'css': 'CSS',
+        'scss': 'SCSS',
+        'tailwind': 'Tailwind',
         'js': 'JavaScript'
       };
       return formatNames[format] || format.toString().toUpperCase();
     }
 
-    function getFormatDisplayName(format) {
+    function getDisplayName(format) {
       const formatNames = {
-        'css': 'CSS Variables',
-        'scss': 'Sass',
-        'tailwind': 'Tailwind CSS',
-        'dart': 'Dart',
-        'json': 'JSON',
+        'css': 'CSS',
+        'scss': 'SCSS',
+        'tailwind': 'Tailwind',
         'js': 'JavaScript'
       };
       return formatNames[format] || format.toUpperCase();
@@ -931,7 +920,7 @@
       currentFilename = filename;
       currentFormat = format;
       
-      const displayName = getFormatDisplayName(format);
+      const displayName = getDisplayName(format);
       previewTitle.textContent = `${filename} (${displayName})`;
       previewContent.textContent = content.substring(0, 2000) + (content.length > 2000 ? '\n\n... (truncated for preview)' : '');
       
@@ -980,7 +969,7 @@
       console.log('Stored currentMultiFileExport:', !!window.currentMultiFileExport);
       
       currentFormat = format;
-      const displayName = getFormatDisplayName(format);
+      const displayName = getDisplayName(format);
       
       // Show the first file in preview (since we don't use primaryFile anymore)
       const fileNames = Object.keys(files);
@@ -1023,7 +1012,7 @@
         btn.disabled = false;
         btn.classList.remove('success', 'primary');
         if (btn.dataset.format) {
-          const originalText = getOriginalButtonText(btn.dataset.format);
+          const originalText = getFormatName(btn.dataset.format);
           btn.textContent = originalText;
         }
       });
@@ -1281,7 +1270,7 @@ Plugin Version: 1.0.0
           URL.revokeObjectURL(url);
           
           const fileCount = Object.keys(files).length;
-          showResult(`ZIP file with ${fileCount} ${getFormatDisplayName(format)} files downloaded!`, 'success');
+          showResult(`ZIP file with ${fileCount} ${getDisplayName(format)} files downloaded!`, 'success');
         }).catch(function(error) {
           console.error('Archive creation failed:', error);
           createSimpleArchive(files, format);
@@ -1327,7 +1316,7 @@ ${'='.repeat(80)}
       URL.revokeObjectURL(url);
       
       const fileCount = Object.keys(files).length;
-      showResult(`Archive file with ${fileCount} ${getFormatDisplayName(format)} files downloaded!`, 'success');
+      showResult(`Archive file with ${fileCount} ${getDisplayName(format)} files downloaded!`, 'success');
     }
 
     function showResult(message, type) {
@@ -1408,7 +1397,7 @@ ${'='.repeat(80)}
         btn.disabled = true;
         btn.classList.remove('success', 'primary');
         if (btn.dataset.format) {
-          const originalText = getOriginalButtonText(btn.dataset.format);
+          const originalText = getFormatName(btn.dataset.format);
           btn.textContent = originalText;
         }
       });
@@ -1423,7 +1412,7 @@ ${'='.repeat(80)}
         btn.disabled = false;
         btn.classList.remove('success', 'primary');
         if (btn.dataset.format) {
-          const originalText = getOriginalButtonText(btn.dataset.format);
+          const originalText = getFormatName(btn.dataset.format);
           btn.textContent = originalText;
         }
       });

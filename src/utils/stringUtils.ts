@@ -41,17 +41,6 @@ export class StringUtils {
   }
 
   /**
-   * Convert token name to Dart variable format
-   */
-  static tokenToDartVariable(name: string): string {
-    return name
-      .replace(/[^a-zA-Z0-9]+/g, '_')
-      .replace(/^[^a-zA-Z_]/, '_')
-      .replace(/_{2,}/g, '_')
-      .replace(/^_+|_+$/g, '');
-  }
-
-  /**
    * Convert token name to Tailwind variable format
    */
   static tokenToTailwindVariable(name: string): string {
@@ -88,10 +77,8 @@ export class StringUtils {
       css: 'css',
       scss: 'scss',
       sass: 'scss',
-      json: 'json',
       js: 'js',
       javascript: 'js',
-      dart: 'dart',
       tailwind: 'js'
     };
     
@@ -134,11 +121,6 @@ export class StringUtils {
           const moduleName = this.toCamelCase(filename.replace('.js', ''));
           instructions += `import ${moduleName} from './${filename}';\n`;
         });
-        break;
-        
-      case 'json':
-        instructions += `Use the primary file: ${primaryFile}\n`;
-        instructions += `Or import individual collection files as needed.\n`;
         break;
         
       default:

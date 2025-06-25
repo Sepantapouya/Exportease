@@ -3,9 +3,7 @@ import { TokenCollector } from '../collectors/tokenCollector';
 import { 
   CSSGenerator, 
   SCSSGenerator, 
-  JSONGenerator, 
   JSGenerator, 
-  DartGenerator, 
   TailwindGenerator 
 } from '../generators/formatGenerators';
 import { GeneratedFiles, TokenAnalysis } from '../types';
@@ -121,15 +119,9 @@ export class ExportService {
         case 'sass':
           collectionFiles = SCSSGenerator.generateCollectionSCSS(collection);
           break;
-        case 'json':
-          collectionFiles = JSONGenerator.generateCollectionJSON(collection);
-          break;
         case 'js':
         case 'javascript':
           collectionFiles = JSGenerator.generateCollectionJS(collection);
-          break;
-        case 'dart':
-          collectionFiles = DartGenerator.generateCollectionDart(collection);
           break;
         case 'tailwind':
           collectionFiles = TailwindGenerator.generateCollectionTailwind(collection);
@@ -196,20 +188,6 @@ export class ExportService {
           content += `  --${name}: /* ${style.name} */;\n`;
         });
         content += '}\n';
-        break;
-        
-      case 'json':
-        const stylesObject = {
-          _metadata: {
-            generator: 'ExportEase Plugin',
-            type: 'styles',
-            generated: new Date().toISOString()
-          },
-          paintStyles: paintStyles.map(style => ({ name: style.name, id: style.id })),
-          textStyles: textStyles.map(style => ({ name: style.name, id: style.id })),
-          effectStyles: effectStyles.map(style => ({ name: style.name, id: style.id }))
-        };
-        content = JSON.stringify(stylesObject, null, 2);
         break;
         
       default:
