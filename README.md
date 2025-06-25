@@ -234,19 +234,6 @@ Contributions are welcome! This is an open-source project built for the design a
 - Test with real Figma files
 - Update documentation for new features
 
-## 📋 Roadmap
-
-### Next Release
-- [ ] **Style Token Support**: Enhanced paint/text/effect style exports
-- [ ] **Custom Templates**: User-defined export formats
-- [ ] **Batch Export**: Export all formats simultaneously
-
-### Future Plans  
-- [ ] **Design Tokens W3C**: Support for the standard format
-- [ ] **Theme Optimization**: Automatic theme variable generation
-- [ ] **CLI Version**: Command-line export for CI/CD
-- [ ] **Figma API Integration**: Direct cloud exports
-
 ## 🐛 Known Limitations
 
 - **Figma Desktop Required**: Browser version doesn't support plugin development
