@@ -409,7 +409,7 @@
 <body>
   <div class="header">
     <div class="plugin-title">📦 ExportEase</div>
-            <div class="plugin-description">Export your local styles and variables to developer-friendly formats including CSS, SCSS, Tailwind, and JavaScript.</div>
+            <div class="plugin-description">Export your local styles and variables to developer-friendly formats including CSS, Tailwind, and JavaScript.</div>
   </div>
 
   <div class="content">
@@ -443,9 +443,6 @@
         <div class="format-buttons">
           <button class="format-btn" data-format="css" title="CSS Custom Properties">
             CSS Variables
-          </button>
-          <button class="format-btn" data-format="scss" title="Sass Variables">
-            Sass
           </button>
           <button class="format-btn" data-format="tailwind" title="Tailwind CSS Config">
             Tailwind CSS
@@ -895,25 +892,23 @@
       }, '*');
     }
 
-    function getFormatName(format) {
-      const formatNames = {
-        'css': 'CSS',
-        'scss': 'SCSS',
-        'tailwind': 'Tailwind',
-        'js': 'JavaScript'
-      };
-      return formatNames[format] || format.toString().toUpperCase();
-    }
+            function getFormatName(format) {
+          const formatNames = {
+            'css': 'CSS',
+            'tailwind': 'Tailwind',
+            'js': 'JavaScript'
+          };
+          return formatNames[format] || format.toString().toUpperCase();
+        }
 
-    function getDisplayName(format) {
-      const formatNames = {
-        'css': 'CSS',
-        'scss': 'SCSS',
-        'tailwind': 'Tailwind',
-        'js': 'JavaScript'
-      };
-      return formatNames[format] || format.toUpperCase();
-    }
+            function getDisplayName(format) {
+          const formatNames = {
+            'css': 'CSS',
+            'tailwind': 'Tailwind',
+            'js': 'JavaScript'
+          };
+          return formatNames[format] || format.toUpperCase();
+        }
 
     function showExportPreview(content, filename, format) {
       currentExportContent = content;
@@ -1087,7 +1082,7 @@
         const cssImports = [];
         const htmlLinks = [];
         const jsImports = [];
-        const scssImports = [];
+
         
         // Add primitive tokens first (if they exist)
         fileNames.filter(name => name.includes('primitive')).forEach(name => {
@@ -1095,9 +1090,6 @@
           cssImports.push(`@import './${name}';`);
           htmlLinks.push(`<link rel="stylesheet" href="./tokens/${name}">`);
           jsImports.push(`import './tokens/${name}';`);
-          if (name.endsWith('.scss')) {
-            scssImports.push(`@import 'tokens/${name.replace('.scss', '')}';`);
-          }
         });
         
         // Add private/internal tokens next
@@ -1107,9 +1099,6 @@
             cssImports.push(`@import './${name}';`);
             htmlLinks.push(`<link rel="stylesheet" href="./tokens/${name}">`);
             jsImports.push(`import './tokens/${name}';`);
-            if (name.endsWith('.scss')) {
-              scssImports.push(`@import 'tokens/${name.replace('.scss', '')}';`);
-            }
           }
         });
         
@@ -1120,9 +1109,6 @@
             cssImports.push(`@import './${name}';`);
             htmlLinks.push(`<link rel="stylesheet" href="./tokens/${name}">`);
             jsImports.push(`import './tokens/${name}';`);
-            if (name.endsWith('.scss')) {
-              scssImports.push(`@import 'tokens/${name.replace('.scss', '')}';`);
-            }
           }
         });
         
@@ -1133,9 +1119,6 @@
             cssImports.push(`@import './${name}';`);
             htmlLinks.push(`<link rel="stylesheet" href="./tokens/${name}">`);
             jsImports.push(`import './tokens/${name}';`);
-            if (name.endsWith('.scss')) {
-              scssImports.push(`@import 'tokens/${name.replace('.scss', '')}';`);
-            }
           }
         });
         
@@ -1195,10 +1178,7 @@ ${fileNames.filter(name => name.endsWith('.css')).map(name => `  "src/assets/tok
   "src/styles.css"
 ]
 
-SCSS Projects:
---------------
-// In your main SCSS file:
-${scssImports.length > 0 ? scssImports.join('\n') : '// No SCSS files in this export'}
+
 
 FILE ORGANIZATION:
 ==================

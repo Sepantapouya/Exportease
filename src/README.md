@@ -17,7 +17,7 @@ src/
 ├── collectors/
 │   └── tokenCollector.ts      # Token collection and processing
 ├── generators/
-│   └── formatGenerators.ts    # Output format generators (CSS, SCSS, JSON, etc.)
+│   └── formatGenerators.ts    # Output format generators (CSS, JS, Tailwind)
 ├── services/
 │   └── exportService.ts       # Main export orchestration service
 └── utils/
@@ -48,7 +48,7 @@ src/
 - Token analysis and grouping by collection/mode
 
 ### `generators/formatGenerators.ts`
-- Multiple format generators (CSS, SCSS, JSON, JS, Dart, Tailwind)
+- Multiple format generators (CSS, JavaScript, Tailwind)
 - Collection-based and comprehensive file generation
 - Format-specific value conversion
 

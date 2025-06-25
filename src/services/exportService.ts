@@ -2,7 +2,6 @@ import { FigmaAnalyzer } from '../analyzers/figmaAnalyzer';
 import { TokenCollector } from '../collectors/tokenCollector';
 import { 
   CSSGenerator, 
-  SCSSGenerator, 
   JSGenerator, 
   TailwindGenerator 
 } from '../generators/formatGenerators';
@@ -114,10 +113,6 @@ export class ExportService {
       switch (format.toLowerCase()) {
         case 'css':
           collectionFiles = CSSGenerator.generateCollectionCSS(collection);
-          break;
-        case 'scss':
-        case 'sass':
-          collectionFiles = SCSSGenerator.generateCollectionSCSS(collection);
           break;
         case 'js':
         case 'javascript':

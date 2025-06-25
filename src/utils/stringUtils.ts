@@ -20,16 +20,6 @@ export class StringUtils {
   }
 
   /**
-   * Convert token name to SCSS variable format
-   */
-  static tokenToSCSSVariable(name: string): string {
-    return name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '');
-  }
-
-  /**
    * Convert token name to JavaScript variable format
    */
   static tokenToJSVariable(name: string): string {
@@ -75,8 +65,6 @@ export class StringUtils {
   static getFileExtension(format: string): string {
     const extensions: Record<string, string> = {
       css: 'css',
-      scss: 'scss',
-      sass: 'scss',
       js: 'js',
       javascript: 'js',
       tailwind: 'js'
@@ -105,13 +93,6 @@ export class StringUtils {
         instructions += `Import in HTML:\n`;
         fileNames.forEach(filename => {
           instructions += `<link rel="stylesheet" href="${filename}">\n`;
-        });
-        break;
-        
-      case 'scss':
-        instructions += `Import in SCSS:\n`;
-        fileNames.forEach(filename => {
-          instructions += `@import '${filename.replace('.scss', '')}';\n`;
         });
         break;
         
