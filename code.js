@@ -12,20 +12,44 @@ const stringUtils_1 = __webpack_require__(820);
 class TokenCollector {
     static async collectAllTokensComprehensively(variables, collections) {
         console.log('\n🔄 STARTING COMPREHENSIVE TOKEN COLLECTION...');
+        if (!variables || variables.length === 0) {
+            console.warn('No variables provided for token collection');
+            return [];
+        }
+        if (!collections || collections.length === 0) {
+            console.warn('No collections provided for token collection');
+            return [];
+        }
         const tokens = [];
         let processedCount = 0;
         let totalToProcess = 0;
         collections.forEach(collection => {
-            const variablesInCollection = variables.filter(v => v.variableCollectionId === collection.id);
+            if (!collection || !collection.modes) {
+                console.warn(`Skipping invalid collection: ${(collection === null || collection === void 0 ? void 0 : collection.name) || 'unknown'}`);
+                return;
+            }
+            const variablesInCollection = variables.filter(v => v && v.variableCollectionId === collection.id);
             totalToProcess += variablesInCollection.length * collection.modes.length;
         });
         console.log(`Will process ${totalToProcess} variable-mode combinations...`);
         for (const collection of collections) {
+            if (!collection || !collection.modes || !collection.name) {
+                console.warn(`Skipping invalid collection: ${(collection === null || collection === void 0 ? void 0 : collection.name) || 'unknown'}`);
+                continue;
+            }
             console.log(`\n📁 Processing collection: "${collection.name}"`);
-            const variablesInCollection = variables.filter(v => v.variableCollectionId === collection.id);
+            const variablesInCollection = variables.filter(v => v && v.variableCollectionId === collection.id);
             for (const mode of collection.modes) {
+                if (!mode || !mode.name || !mode.modeId) {
+                    console.warn(`Skipping invalid mode in collection "${collection.name}"`);
+                    continue;
+                }
                 console.log(`  🎯 Processing mode: "${mode.name}"`);
                 for (const variable of variablesInCollection) {
+                    if (!variable || !variable.name || !variable.valuesByMode) {
+                        console.warn(`Skipping invalid variable in collection "${collection.name}"`);
+                        continue;
+                    }
                     try {
                         const value = variable.valuesByMode[mode.modeId];
                         if (value !== undefined) {
@@ -33,10 +57,10 @@ class TokenCollector {
                             const token = {
                                 name: variable.name,
                                 value: resolvedValue,
-                                type: variable.resolvedType,
+                                type: variable.resolvedType || 'UNKNOWN',
                                 collection: collection.name,
                                 mode: mode.name,
-                                resolvedType: variable.resolvedType,
+                                resolvedType: variable.resolvedType || 'UNKNOWN',
                                 originalValue: value
                             };
                             tokens.push(token);
@@ -58,13 +82,27 @@ class TokenCollector {
     }
     static analyzeTokensComprehensively(tokens) {
         console.log('\n📊 ANALYZING TOKEN STRUCTURE...');
+        if (!tokens || tokens.length === 0) {
+            console.warn('No tokens provided for analysis');
+            return {
+                byCollection: {},
+                byType: {},
+                byMode: {},
+                collections: []
+            };
+        }
         const byCollection = {};
         const byType = {};
         const byMode = {};
         const collectionsMap = {};
         tokens.forEach(token => {
+            if (!token || !token.collection || !token.mode || !token.name) {
+                console.warn('Skipping invalid token:', token);
+                return;
+            }
             byCollection[token.collection] = (byCollection[token.collection] || 0) + 1;
-            byType[token.type] = (byType[token.type] || 0) + 1;
+            const tokenType = token.type || 'UNKNOWN';
+            byType[tokenType] = (byType[tokenType] || 0) + 1;
             byMode[token.mode] = (byMode[token.mode] || 0) + 1;
             if (!collectionsMap[token.collection]) {
                 collectionsMap[token.collection] = {};
@@ -74,18 +112,35 @@ class TokenCollector {
             }
             collectionsMap[token.collection][token.mode].push(token);
         });
-        const collections = Object.entries(collectionsMap).map(([collectionName, modes]) => ({
+        const collections = Object.entries(collectionsMap)
+            .filter(([collectionName, modes]) => collectionName && modes && Object.keys(modes).length > 0)
+            .map(([collectionName, modes]) => ({
             name: collectionName,
-            modes: Object.entries(modes).map(([modeName, tokens]) => {
-                const tokenNames = tokens.map(t => t.name);
+            modes: Object.entries(modes)
+                .filter(([modeName, tokens]) => modeName && tokens && tokens.length > 0)
+                .map(([modeName, tokens]) => {
+                const tokenNames = tokens
+                    .filter(t => t && t.name)
+                    .map(t => t.name);
+                if (tokenNames.length === 0) {
+                    console.warn(`No valid tokens found for mode ${modeName} in collection ${collectionName}`);
+                    return {
+                        name: modeName,
+                        tokens: []
+                    };
+                }
                 const sortedNames = stringUtils_1.StringUtils.dynamicSort(tokenNames);
-                const sortedTokens = sortedNames.map(name => tokens.find(t => t.name === name));
+                const sortedTokens = sortedNames
+                    .map(name => tokens.find(t => t && t.name === name))
+                    .filter(token => token !== undefined);
                 return {
                     name: modeName,
                     tokens: sortedTokens
                 };
             })
-        }));
+                .filter(mode => mode.tokens.length > 0)
+        }))
+            .filter(collection => collection.modes.length > 0);
         return {
             byCollection,
             byType,
@@ -95,25 +150,37 @@ class TokenCollector {
     }
     static async resolveVariableValue(value, type) {
         try {
+            if (value === null || value === undefined) {
+                console.warn('Encountered null/undefined value in variable resolution');
+                return 'undefined';
+            }
             if (value && typeof value === 'object' && value.type === 'VARIABLE_ALIAS') {
                 try {
+                    if (!value.id) {
+                        console.warn('Variable alias missing ID');
+                        return 'var(--missing-alias-id)';
+                    }
                     const referencedVariable = await figma.variables.getVariableByIdAsync(value.id);
-                    if (referencedVariable) {
+                    if (referencedVariable && referencedVariable.name) {
                         return `var(--${this.tokenToCSSVariable(referencedVariable.name)})`;
+                    }
+                    else {
+                        console.warn(`Referenced variable not found for ID: ${value.id}`);
+                        return `var(--unresolved-${value.id})`;
                     }
                 }
                 catch (error) {
                     console.warn(`Failed to resolve variable alias ${value.id}:`, error);
-                    return `var(--unresolved-${value.id})`;
+                    return `var(--error-${value.id || 'unknown'})`;
                 }
             }
             switch (type) {
                 case 'COLOR':
-                    if (value && typeof value === 'object' && 'r' in value) {
-                        const r = Math.round(value.r * 255);
-                        const g = Math.round(value.g * 255);
-                        const b = Math.round(value.b * 255);
-                        const a = value.a !== undefined ? value.a : 1;
+                    if (value && typeof value === 'object' && 'r' in value && 'g' in value && 'b' in value) {
+                        const r = Math.max(0, Math.min(255, Math.round((value.r || 0) * 255)));
+                        const g = Math.max(0, Math.min(255, Math.round((value.g || 0) * 255)));
+                        const b = Math.max(0, Math.min(255, Math.round((value.b || 0) * 255)));
+                        const a = value.a !== undefined ? Math.max(0, Math.min(1, value.a)) : 1;
                         if (a === 1) {
                             return `rgb(${r}, ${g}, ${b})`;
                         }
@@ -121,21 +188,29 @@ class TokenCollector {
                             return `rgba(${r}, ${g}, ${b}, ${a})`;
                         }
                     }
-                    break;
+                    else {
+                        console.warn('Invalid color value format:', value);
+                        return 'rgba(0, 0, 0, 1)';
+                    }
                 case 'FLOAT':
-                    return typeof value === 'number' ? value.toString() : String(value);
+                    if (typeof value === 'number' && !isNaN(value)) {
+                        return value.toString();
+                    }
+                    else {
+                        const parsed = parseFloat(String(value));
+                        return isNaN(parsed) ? '0' : parsed.toString();
+                    }
                 case 'STRING':
-                    return String(value);
+                    return String(value || '');
                 case 'BOOLEAN':
-                    return String(value);
+                    return String(Boolean(value));
                 default:
-                    return String(value);
+                    return String(value || '');
             }
-            return String(value);
         }
         catch (error) {
-            console.warn(`Error resolving value:`, error);
-            return String(value);
+            console.warn(`Error resolving value for type ${type}:`, error);
+            return String(value || 'error');
         }
     }
     static tokenToCSSVariable(name) {
@@ -158,41 +233,65 @@ exports.FigmaAnalyzer = void 0;
 class FigmaAnalyzer {
     static async analyzeAvailableExports() {
         console.log('=== ANALYZING AVAILABLE EXPORTS ===');
-        const localPaintStyles = await figma.getLocalPaintStylesAsync();
-        const localTextStyles = await figma.getLocalTextStylesAsync();
-        const localEffectStyles = await figma.getLocalEffectStylesAsync();
-        const localVariables = await figma.variables.getLocalVariablesAsync();
-        const localCollections = await figma.variables.getLocalVariableCollectionsAsync();
-        console.log(`Found ${localVariables.length} total local variables`);
-        console.log(`Found ${localCollections.length} variable collections:`);
-        localCollections.forEach((collection, index) => {
-            console.log(`  Collection ${index + 1}: "${collection.name}" with ${collection.modes.length} modes`);
-            collection.modes.forEach((mode, modeIndex) => {
-                console.log(`    Mode ${modeIndex + 1}: "${mode.name}" (${mode.modeId})`);
-            });
-            const variablesInCollection = localVariables.filter(v => v.variableCollectionId === collection.id);
-            console.log(`    Variables in this collection: ${variablesInCollection.length}`);
-            const exampleVars = variablesInCollection.slice(0, 3).map(v => v.name);
-            if (exampleVars.length > 0) {
-                console.log(`    Example variables: ${exampleVars.join(', ')}`);
+        try {
+            const localPaintStyles = await figma.getLocalPaintStylesAsync();
+            const localTextStyles = await figma.getLocalTextStylesAsync();
+            const localEffectStyles = await figma.getLocalEffectStylesAsync();
+            const localVariables = await figma.variables.getLocalVariablesAsync();
+            const localCollections = await figma.variables.getLocalVariableCollectionsAsync();
+            console.log('📊 Raw Figma API Results:');
+            console.log(`  - Paint styles: ${localPaintStyles.length}`);
+            console.log(`  - Text styles: ${localTextStyles.length}`);
+            console.log(`  - Effect styles: ${localEffectStyles.length}`);
+            console.log(`  - Variables: ${localVariables.length}`);
+            console.log(`  - Collections: ${localCollections.length}`);
+            if (localVariables.length === 0) {
+                console.warn('⚠️ No local variables found! User needs to create variables first.');
             }
-        });
-        const breakdown = {
-            paintStyles: localPaintStyles.length,
-            textStyles: localTextStyles.length,
-            effectStyles: localEffectStyles.length,
-            variables: localVariables.length
-        };
-        const stylesCount = localPaintStyles.length + localTextStyles.length + localEffectStyles.length;
-        const variablesCount = localVariables.length;
-        const hasExports = stylesCount > 0 || variablesCount > 0;
-        console.log(`Total available: ${stylesCount} styles, ${variablesCount} variables`);
-        return {
-            hasExports,
-            stylesCount,
-            variablesCount,
-            breakdown
-        };
+            if (localCollections.length === 0) {
+                console.warn('⚠️ No variable collections found! User needs to create variable collections first.');
+            }
+            console.log(`Found ${localVariables.length} total local variables`);
+            console.log(`Found ${localCollections.length} variable collections:`);
+            localCollections.forEach((collection, index) => {
+                console.log(`  Collection ${index + 1}: "${collection.name}" with ${collection.modes.length} modes`);
+                collection.modes.forEach((mode, modeIndex) => {
+                    console.log(`    Mode ${modeIndex + 1}: "${mode.name}" (${mode.modeId})`);
+                });
+                const variablesInCollection = localVariables.filter(v => v.variableCollectionId === collection.id);
+                console.log(`    Variables in this collection: ${variablesInCollection.length}`);
+                const exampleVars = variablesInCollection.slice(0, 3).map(v => v.name);
+                if (exampleVars.length > 0) {
+                    console.log(`    Example variables: ${exampleVars.join(', ')}`);
+                }
+            });
+            const breakdown = {
+                paintStyles: localPaintStyles.length,
+                textStyles: localTextStyles.length,
+                effectStyles: localEffectStyles.length,
+                variables: localVariables.length
+            };
+            const stylesCount = localPaintStyles.length + localTextStyles.length + localEffectStyles.length;
+            const variablesCount = localVariables.length;
+            const hasExports = stylesCount > 0 || variablesCount > 0;
+            console.log(`📊 Analysis Summary:`);
+            console.log(`  - Total styles: ${stylesCount}`);
+            console.log(`  - Total variables: ${variablesCount}`);
+            console.log(`  - Has exports: ${hasExports}`);
+            if (!hasExports) {
+                console.warn('⚠️ No exports available! User needs to create variables or styles first.');
+            }
+            return {
+                hasExports,
+                stylesCount,
+                variablesCount,
+                breakdown
+            };
+        }
+        catch (error) {
+            console.error('💥 Error in analyzeAvailableExports:', error);
+            throw error;
+        }
     }
     static async getCollectionDetails() {
         const localVariables = await figma.variables.getLocalVariablesAsync();
@@ -249,23 +348,44 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.StringUtils = void 0;
 class StringUtils {
     static slugify(text) {
+        if (!text || typeof text !== 'string') {
+            console.warn('Invalid input for slugify:', text);
+            return 'invalid-input';
+        }
         return text
             .toLowerCase()
             .replace(/[^a-z0-9]+/g, '-')
-            .replace(/^-+|-+$/g, '');
+            .replace(/^-+|-+$/g, '')
+            || 'empty';
     }
     static tokenToCSSVariable(name) {
+        if (!name || typeof name !== 'string') {
+            console.warn('Invalid input for tokenToCSSVariable:', name);
+            return 'invalid-token';
+        }
         return name
             .toLowerCase()
             .replace(/[^a-z0-9]+/g, '-')
-            .replace(/^-+|-+$/g, '');
+            .replace(/^-+|-+$/g, '')
+            || 'empty-token';
     }
     static tokenToJSVariable(name) {
-        return name
+        if (!name || typeof name !== 'string') {
+            console.warn('Invalid input for tokenToJSVariable:', name);
+            return 'invalidToken';
+        }
+        const result = name
             .replace(/[^a-zA-Z0-9]+/g, '_')
             .replace(/^[^a-zA-Z_]/, '_')
             .replace(/_{2,}/g, '_')
             .replace(/^_+|_+$/g, '');
+        if (!result) {
+            return 'emptyToken';
+        }
+        if (/^\d/.test(result)) {
+            return '_' + result;
+        }
+        return result;
     }
     static tokenToTailwindVariable(name) {
         return name
@@ -432,7 +552,7 @@ class StringUtils {
                 structure.hasNumericSequences = true;
             }
         });
-        structure.averageDepth = totalDepth / tokens.length;
+        structure.averageDepth = tokens.length > 0 ? totalDepth / tokens.length : 0;
         structure.isSimpleNumeric = simpleNumericCount > tokens.length * 0.4;
         structure.isHierarchical = !structure.isSimpleNumeric &&
             complexHierarchicalCount > tokens.length * 0.6 &&
@@ -677,23 +797,46 @@ const stringUtils_1 = __webpack_require__(820);
 class ExportService {
     static async exportVariables(format) {
         console.log('=== COMPLETE VARIABLE EXPORT STARTED (ASYNC API) ===');
+        console.log(`📝 Export format: ${format}`);
         try {
+            console.log('🔍 Step 1: Analyzing Figma file...');
             const { localVariables, allCollections, totalExpectedTokens } = await figmaAnalyzer_1.FigmaAnalyzer.getCollectionDetails();
+            console.log(`📊 Found: ${localVariables.length} variables, ${allCollections.length} collections`);
+            if (!localVariables || localVariables.length === 0) {
+                throw new Error('No local variables found in this Figma file. Please create some variables first.');
+            }
+            if (!allCollections || allCollections.length === 0) {
+                throw new Error('No variable collections found in this Figma file. Please create some variable collections first.');
+            }
+            console.log('🔄 Step 2: Collecting tokens...');
             const tokens = await tokenCollector_1.TokenCollector.collectAllTokensComprehensively(localVariables, allCollections);
+            console.log(`📦 Collected ${tokens.length} tokens`);
+            if (tokens.length === 0) {
+                throw new Error('No tokens could be collected from the variables. Please check that your variables have values.');
+            }
             console.log(`\n✅ COLLECTION RESULTS:`);
             console.log(`Tokens collected: ${tokens.length} / ${totalExpectedTokens} expected`);
             if (tokens.length < totalExpectedTokens * 0.9) {
                 console.warn(`⚠️  WARNING: Collected ${tokens.length} tokens but expected ~${totalExpectedTokens}. Some tokens may be missing!`);
             }
+            console.log('📊 Step 3: Analyzing tokens...');
             const tokenAnalysis = tokenCollector_1.TokenCollector.analyzeTokensComprehensively(tokens);
             console.log(`\n📊 TOKEN ANALYSIS:`);
             console.log(`Collections processed: ${Object.keys(tokenAnalysis.byCollection).length}`);
             console.log(`Token types found: ${Object.keys(tokenAnalysis.byType).join(', ')}`);
             console.log(`Modes processed: ${Object.keys(tokenAnalysis.byMode).join(', ')}`);
+            if (tokenAnalysis.collections.length === 0) {
+                throw new Error('No valid collections found after analysis. Please check your variable structure.');
+            }
             Object.entries(tokenAnalysis.byCollection).forEach(([collection, count]) => {
                 console.log(`  ${collection}: ${count} tokens`);
             });
+            console.log('🏗️ Step 4: Generating files...');
             const files = await this.generateFiles(tokenAnalysis, format);
+            console.log(`📁 Generated ${Object.keys(files).length} files`);
+            if (Object.keys(files).length === 0) {
+                throw new Error(`No files were generated for format: ${format}. Please check the format is supported.`);
+            }
             console.log(`\n📁 FILE GENERATION:`);
             console.log(`Generated ${Object.keys(files).length} files:`);
             Object.entries(files).forEach(([filename, content]) => {
@@ -701,10 +844,17 @@ class ExportService {
                 const vars = (content.match(/--[a-zA-Z0-9-]+:/g) || []).length;
                 console.log(`  ${filename}: ${Math.round(content.length / 1024)}KB, ${lines} lines, ${vars} CSS variables`);
             });
+            console.log('📤 Step 5: Sending results to UI...');
             this.sendExportResults(files, format);
+            console.log('✅ Export completed successfully');
         }
         catch (error) {
-            console.error('Variable export failed:', error);
+            console.error('💥 Variable export failed:', error);
+            console.error('Error details:', {
+                message: error instanceof Error ? error.message : String(error),
+                stack: error instanceof Error ? error.stack : 'No stack trace',
+                name: error instanceof Error ? error.name : 'Unknown error type'
+            });
             figma.ui.postMessage({
                 type: 'error',
                 message: `Variable export failed: ${error instanceof Error ? error.message : String(error)}`
@@ -723,7 +873,7 @@ class ExportService {
             const content = await this.generateStylesFile(localPaintStyles, localTextStyles, localEffectStyles, format);
             const filename = `styles.${stringUtils_1.StringUtils.getFileExtension(format)}`;
             figma.ui.postMessage({
-                type: 'export-complete',
+                type: 'export-ready',
                 format: format,
                 filename: filename,
                 content: content
@@ -774,28 +924,301 @@ class ExportService {
             const filename = Object.keys(files)[0];
             const content = files[filename];
             figma.ui.postMessage({
-                type: 'export-complete',
+                type: 'export-ready',
                 format: format,
                 filename: filename,
                 content: content
             });
         }
     }
+    static sendDirectDownload(files, format) {
+        console.log('📤 Sending direct download...');
+        if (Object.keys(files).length > 1) {
+            figma.ui.postMessage({
+                type: 'download-multi-file',
+                format: format,
+                fileCount: Object.keys(files).length,
+                files: files,
+                instructions: `${Object.keys(files).length} files ready for download.`
+            });
+        }
+        else {
+            const filename = Object.keys(files)[0];
+            const content = files[filename];
+            figma.ui.postMessage({
+                type: 'download-single-file',
+                format: format,
+                filename: filename,
+                content: content
+            });
+        }
+        console.log('✅ Direct download message sent to UI');
+    }
     static async generateStylesFile(paintStyles, textStyles, effectStyles, format) {
         let content = '';
         switch (format.toLowerCase()) {
             case 'css':
                 content = '/* Generated Figma Styles */\n:root {\n';
-                paintStyles.forEach(style => {
-                    const name = stringUtils_1.StringUtils.tokenToCSSVariable(style.name);
-                    content += `  --${name}: /* ${style.name} */;\n`;
-                });
+                if (paintStyles && paintStyles.length > 0) {
+                    content += '  /* Paint Styles */\n';
+                    paintStyles.forEach(style => {
+                        if (!style || !style.name)
+                            return;
+                        const name = stringUtils_1.StringUtils.tokenToCSSVariable(style.name);
+                        let colorValue = 'rgba(0, 0, 0, 1)';
+                        try {
+                            if (style.paints && style.paints.length > 0) {
+                                const paint = style.paints[0];
+                                if (paint.type === 'SOLID' && paint.color) {
+                                    const r = Math.round((paint.color.r || 0) * 255);
+                                    const g = Math.round((paint.color.g || 0) * 255);
+                                    const b = Math.round((paint.color.b || 0) * 255);
+                                    const a = paint.opacity !== undefined ? paint.opacity : 1;
+                                    if (a === 1) {
+                                        colorValue = `rgb(${r}, ${g}, ${b})`;
+                                    }
+                                    else {
+                                        colorValue = `rgba(${r}, ${g}, ${b}, ${a})`;
+                                    }
+                                }
+                                else if (paint.type === 'GRADIENT_LINEAR' || paint.type === 'GRADIENT_RADIAL') {
+                                    if (paint.gradientStops && paint.gradientStops.length > 0) {
+                                        const stop = paint.gradientStops[0];
+                                        if (stop.color) {
+                                            const r = Math.round((stop.color.r || 0) * 255);
+                                            const g = Math.round((stop.color.g || 0) * 255);
+                                            const b = Math.round((stop.color.b || 0) * 255);
+                                            const a = stop.color.a !== undefined ? stop.color.a : 1;
+                                            colorValue = `rgba(${r}, ${g}, ${b}, ${a})`;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        catch (error) {
+                            console.warn(`Failed to extract color from paint style "${style.name}":`, error);
+                        }
+                        content += `  --${name}: ${colorValue};\n`;
+                    });
+                }
+                if (textStyles && textStyles.length > 0) {
+                    content += '\n  /* Text Styles */\n';
+                    textStyles.forEach(style => {
+                        if (!style || !style.name)
+                            return;
+                        const name = stringUtils_1.StringUtils.tokenToCSSVariable(style.name);
+                        try {
+                            if (style.fontSize) {
+                                content += `  --${name}-font-size: ${style.fontSize}px;\n`;
+                            }
+                            if (style.fontName && style.fontName.family) {
+                                content += `  --${name}-font-family: "${style.fontName.family}";\n`;
+                            }
+                            if (style.fontName && style.fontName.style) {
+                                content += `  --${name}-font-style: ${style.fontName.style.toLowerCase()};\n`;
+                            }
+                            if (style.lineHeight && typeof style.lineHeight === 'object') {
+                                if (style.lineHeight.unit === 'PIXELS') {
+                                    content += `  --${name}-line-height: ${style.lineHeight.value}px;\n`;
+                                }
+                                else if (style.lineHeight.unit === 'PERCENT') {
+                                    content += `  --${name}-line-height: ${style.lineHeight.value}%;\n`;
+                                }
+                            }
+                        }
+                        catch (error) {
+                            console.warn(`Failed to extract properties from text style "${style.name}":`, error);
+                        }
+                    });
+                }
+                if (effectStyles && effectStyles.length > 0) {
+                    content += '\n  /* Effect Styles */\n';
+                    effectStyles.forEach(style => {
+                        if (!style || !style.name || !style.effects)
+                            return;
+                        const name = stringUtils_1.StringUtils.tokenToCSSVariable(style.name);
+                        try {
+                            style.effects.forEach((effect, index) => {
+                                var _a, _b;
+                                if (effect.type === 'DROP_SHADOW') {
+                                    const x = ((_a = effect.offset) === null || _a === void 0 ? void 0 : _a.x) || 0;
+                                    const y = ((_b = effect.offset) === null || _b === void 0 ? void 0 : _b.y) || 0;
+                                    const blur = effect.radius || 0;
+                                    const spread = effect.spread || 0;
+                                    let shadowColor = 'rgba(0, 0, 0, 0.25)';
+                                    if (effect.color) {
+                                        const r = Math.round((effect.color.r || 0) * 255);
+                                        const g = Math.round((effect.color.g || 0) * 255);
+                                        const b = Math.round((effect.color.b || 0) * 255);
+                                        const a = effect.color.a !== undefined ? effect.color.a : 1;
+                                        shadowColor = `rgba(${r}, ${g}, ${b}, ${a})`;
+                                    }
+                                    const shadowValue = `${x}px ${y}px ${blur}px ${spread}px ${shadowColor}`;
+                                    content += `  --${name}-shadow${index > 0 ? `-${index + 1}` : ''}: ${shadowValue};\n`;
+                                }
+                            });
+                        }
+                        catch (error) {
+                            console.warn(`Failed to extract effects from style "${style.name}":`, error);
+                        }
+                    });
+                }
                 content += '}\n';
+                break;
+            case 'js':
+            case 'javascript':
+                content = '// Generated Figma Styles\nexport const styles = {\n';
+                if (paintStyles && paintStyles.length > 0) {
+                    paintStyles.forEach(style => {
+                        if (!style || !style.name)
+                            return;
+                        const name = stringUtils_1.StringUtils.tokenToJSVariable(style.name);
+                        let colorValue = 'rgba(0, 0, 0, 1)';
+                        try {
+                            if (style.paints && style.paints.length > 0) {
+                                const paint = style.paints[0];
+                                if (paint.type === 'SOLID' && paint.color) {
+                                    const r = Math.round((paint.color.r || 0) * 255);
+                                    const g = Math.round((paint.color.g || 0) * 255);
+                                    const b = Math.round((paint.color.b || 0) * 255);
+                                    const a = paint.opacity !== undefined ? paint.opacity : 1;
+                                    colorValue = a === 1 ? `rgb(${r}, ${g}, ${b})` : `rgba(${r}, ${g}, ${b}, ${a})`;
+                                }
+                            }
+                        }
+                        catch (error) {
+                            console.warn(`Failed to extract color from paint style "${style.name}":`, error);
+                        }
+                        content += `  ${name}: '${colorValue}',\n`;
+                    });
+                }
+                content += '};\n\nexport default styles;\n';
                 break;
             default:
                 throw new Error(`Styles export not implemented for format: ${format}`);
         }
         return content;
+    }
+    static async previewFiles(format) {
+        console.log('=== PREVIEWING FILES FOR EXPORT ===');
+        try {
+            const { localVariables, allCollections } = await figmaAnalyzer_1.FigmaAnalyzer.getCollectionDetails();
+            const tokens = await tokenCollector_1.TokenCollector.collectAllTokensComprehensively(localVariables, allCollections);
+            const tokenAnalysis = tokenCollector_1.TokenCollector.analyzeTokensComprehensively(tokens);
+            const filePreviews = [];
+            const extension = stringUtils_1.StringUtils.getFileExtension(format);
+            tokenAnalysis.collections.forEach(collection => {
+                collection.modes.forEach(mode => {
+                    const filename = `${stringUtils_1.StringUtils.slugify(collection.name)}-${stringUtils_1.StringUtils.slugify(mode.name)}.${extension}`;
+                    const tokensCount = mode.tokens.length;
+                    const estimatedSize = this.estimateFileSize(tokensCount, format);
+                    filePreviews.push({
+                        filename,
+                        collection: collection.name,
+                        mode: mode.name,
+                        estimated_size: estimatedSize,
+                        tokens_count: tokensCount
+                    });
+                });
+            });
+            console.log(`📋 File preview generated: ${filePreviews.length} files`);
+            return {
+                files: filePreviews,
+                total_collections: tokenAnalysis.collections.length,
+                total_modes: tokenAnalysis.collections.reduce((sum, col) => sum + col.modes.length, 0)
+            };
+        }
+        catch (error) {
+            console.error('File preview failed:', error);
+            throw error;
+        }
+    }
+    static async exportSelectedFiles(format, selectedFiles) {
+        console.log('=== SELECTED FILES EXPORT STARTED ===');
+        console.log(`Selected files: ${selectedFiles.join(', ')}`);
+        try {
+            const { localVariables, allCollections, totalExpectedTokens } = await figmaAnalyzer_1.FigmaAnalyzer.getCollectionDetails();
+            const tokens = await tokenCollector_1.TokenCollector.collectAllTokensComprehensively(localVariables, allCollections);
+            const fullTokenAnalysis = tokenCollector_1.TokenCollector.analyzeTokensComprehensively(tokens);
+            const filteredAnalysis = this.filterTokenAnalysisBySelection(fullTokenAnalysis, selectedFiles, format);
+            const files = await this.generateFiles(filteredAnalysis, format);
+            this.sendExportResults(files, format);
+        }
+        catch (error) {
+            console.error('Selected files export failed:', error);
+            figma.ui.postMessage({
+                type: 'error',
+                message: `Selected files export failed: ${error instanceof Error ? error.message : String(error)}`
+            });
+        }
+    }
+    static async exportSelectedFilesDirect(format, selectedFiles) {
+        console.log('=== DIRECT SELECTED FILES EXPORT STARTED ===');
+        console.log(`Selected files: ${selectedFiles.join(', ')}`);
+        try {
+            const { localVariables, allCollections, totalExpectedTokens } = await figmaAnalyzer_1.FigmaAnalyzer.getCollectionDetails();
+            const tokens = await tokenCollector_1.TokenCollector.collectAllTokensComprehensively(localVariables, allCollections);
+            const fullTokenAnalysis = tokenCollector_1.TokenCollector.analyzeTokensComprehensively(tokens);
+            const filteredAnalysis = this.filterTokenAnalysisBySelection(fullTokenAnalysis, selectedFiles, format);
+            const files = await this.generateFiles(filteredAnalysis, format);
+            if (Object.keys(files).length === 0) {
+                throw new Error('No files were generated from the selected items');
+            }
+            this.sendDirectDownload(files, format);
+        }
+        catch (error) {
+            console.error('Direct selected files export failed:', error);
+            figma.ui.postMessage({
+                type: 'error',
+                message: `Direct export failed: ${error instanceof Error ? error.message : String(error)}`
+            });
+        }
+    }
+    static filterTokenAnalysisBySelection(tokenAnalysis, selectedFiles, format) {
+        const extension = stringUtils_1.StringUtils.getFileExtension(format);
+        const filteredCollections = tokenAnalysis.collections.map(collection => {
+            const filteredModes = collection.modes.filter(mode => {
+                const expectedFilename = `${stringUtils_1.StringUtils.slugify(collection.name)}-${stringUtils_1.StringUtils.slugify(mode.name)}.${extension}`;
+                return selectedFiles.includes(expectedFilename);
+            });
+            return Object.assign(Object.assign({}, collection), { modes: filteredModes });
+        }).filter(collection => collection.modes.length > 0);
+        return Object.assign(Object.assign({}, tokenAnalysis), { collections: filteredCollections });
+    }
+    static estimateFileSize(tokenCount, format) {
+        if (!tokenCount || tokenCount < 0) {
+            console.warn('Invalid token count for file size estimation:', tokenCount);
+            return '0B';
+        }
+        if (!format || typeof format !== 'string') {
+            console.warn('Invalid format for file size estimation:', format);
+            return '0B';
+        }
+        let bytesPerToken;
+        switch (format.toLowerCase()) {
+            case 'css':
+                bytesPerToken = 45;
+                break;
+            case 'js':
+            case 'javascript':
+                bytesPerToken = 35;
+                break;
+            case 'tailwind':
+                bytesPerToken = 50;
+                break;
+            default:
+                bytesPerToken = 40;
+        }
+        const estimatedBytes = tokenCount * bytesPerToken + 200;
+        if (estimatedBytes < 1024) {
+            return `${estimatedBytes}B`;
+        }
+        else if (estimatedBytes < 1024 * 1024) {
+            return `${Math.round(estimatedBytes / 1024)}KB`;
+        }
+        else {
+            return `${Math.round(estimatedBytes / (1024 * 1024))}MB`;
+        }
     }
 }
 exports.ExportService = ExportService;
@@ -819,10 +1242,25 @@ exports.BaseGenerator = BaseGenerator;
 class CSSGenerator extends BaseGenerator {
     static generateCollectionCSS(collection) {
         const files = {};
+        if (!collection || !collection.name || !collection.modes) {
+            console.warn('Invalid collection provided to CSS generator:', collection);
+            return files;
+        }
         collection.modes.forEach(mode => {
+            if (!mode || !mode.name || !mode.tokens) {
+                console.warn(`Skipping invalid mode in collection "${collection.name}":`, mode);
+                return;
+            }
             const fileName = `${stringUtils_1.StringUtils.slugify(collection.name)}-${stringUtils_1.StringUtils.slugify(mode.name)}.css`;
-            const content = this.generateCSS(mode.tokens, collection.name, mode.name);
-            files[fileName] = content;
+            if (files[fileName]) {
+                console.warn(`Duplicate filename detected: ${fileName}. Adding suffix.`);
+                const timestamp = Date.now();
+                const newFileName = `${stringUtils_1.StringUtils.slugify(collection.name)}-${stringUtils_1.StringUtils.slugify(mode.name)}-${timestamp}.css`;
+                files[newFileName] = this.generateCSS(mode.tokens, collection.name, mode.name);
+            }
+            else {
+                files[fileName] = this.generateCSS(mode.tokens, collection.name, mode.name);
+            }
         });
         return files;
     }
@@ -843,10 +1281,23 @@ class CSSGenerator extends BaseGenerator {
         return css;
     }
     static generateCSS(tokens, collectionName, modeName) {
+        if (!tokens || !Array.isArray(tokens)) {
+            console.warn('Invalid tokens provided to CSS generator');
+            return `/* No valid tokens found for ${collectionName} - ${modeName} */\n:root {\n}\n`;
+        }
+        if (!collectionName || !modeName) {
+            console.warn('Missing collection or mode name for CSS generation');
+            return `/* Missing collection/mode information */\n:root {\n}\n`;
+        }
         let css = `/* ${this.generateFileComment(collectionName, modeName)} */\n\n:root {\n`;
         tokens.forEach(token => {
+            if (!token || !token.name || token.value === undefined || token.value === null) {
+                console.warn('Skipping invalid token:', token);
+                return;
+            }
             const cssVar = stringUtils_1.StringUtils.tokenToCSSVariable(token.name);
-            css += `  --${cssVar}: ${token.value};\n`;
+            const escapedValue = String(token.value).replace(/"/g, '\\"');
+            css += `  --${cssVar}: ${escapedValue};\n`;
         });
         css += `}\n`;
         return css;
@@ -1017,22 +1468,78 @@ var __webpack_unused_export__;
 __webpack_unused_export__ = ({ value: true });
 const figmaAnalyzer_1 = __webpack_require__(346);
 const exportService_1 = __webpack_require__(952);
-figma.showUI(__html__, { width: 320, height: 600 });
+figma.showUI(__html__, { width: 420, height: 600 });
 figma.ui.onmessage = async (msg) => {
-    if (msg.type === 'export') {
-        try {
-            await handleExport(msg.format, msg.source);
-        }
-        catch (error) {
-            console.error('Export error:', error);
-            figma.ui.postMessage({
-                type: 'error',
-                message: `Export failed: ${error instanceof Error ? error.message : String(error)}`
-            });
+    var _a, _b;
+    console.log('=== PLUGIN MESSAGE RECEIVED ===');
+    console.log('Message type:', msg === null || msg === void 0 ? void 0 : msg.type);
+    console.log('Full message:', JSON.stringify(msg, null, 2));
+    if (!msg || typeof msg !== 'object' || !msg.type) {
+        console.error('Invalid message received:', msg);
+        figma.ui.postMessage({
+            type: 'error',
+            message: 'Invalid message format received'
+        });
+        return;
+    }
+    try {
+        switch (msg.type) {
+            case 'export':
+                console.log(`🚀 Processing export request: ${msg.format} from ${msg.source}`);
+                if (!msg.format || !msg.source) {
+                    throw new Error('Format and source are required for export');
+                }
+                await handleExport(msg.format, msg.source);
+                console.log(`✅ Export request completed: ${msg.format} from ${msg.source}`);
+                break;
+            case 'preview-files':
+                console.log(`📋 Processing preview request: ${msg.format} from ${msg.source}`);
+                if (!msg.format || !msg.source) {
+                    throw new Error('Format and source are required for preview');
+                }
+                await handleFilePreview(msg.format, msg.source);
+                console.log(`✅ Preview request completed: ${msg.format} from ${msg.source}`);
+                break;
+            case 'export-selected':
+                console.log(`📦 Processing selected export: ${msg.format} from ${msg.source}, files: ${(_a = msg.selectedFiles) === null || _a === void 0 ? void 0 : _a.length}`);
+                if (!msg.format || !msg.source || !msg.selectedFiles) {
+                    throw new Error('Format, source, and selectedFiles are required for selected export');
+                }
+                await handleSelectedExport(msg.format, msg.source, msg.selectedFiles);
+                console.log(`✅ Selected export completed: ${msg.format} from ${msg.source}`);
+                break;
+            case 'export-selected-direct':
+                console.log(`🚀 Processing direct selected export: ${msg.format} from ${msg.source}, files: ${(_b = msg.selectedFiles) === null || _b === void 0 ? void 0 : _b.length}`);
+                if (!msg.format || !msg.source || !msg.selectedFiles) {
+                    throw new Error('Format, source, and selectedFiles are required for direct selected export');
+                }
+                await handleSelectedExportDirect(msg.format, msg.source, msg.selectedFiles);
+                console.log(`✅ Direct selected export completed: ${msg.format} from ${msg.source}`);
+                break;
+            case 'cancel-export':
+                console.log('❌ Export canceled by user');
+                break;
+            case 'check-exports':
+                console.log('🔍 Re-checking exports...');
+                await init();
+                console.log('✅ Export check completed');
+                break;
+            default:
+                console.warn(`❓ Unknown message type: ${msg.type}`);
+                figma.ui.postMessage({
+                    type: 'error',
+                    message: `Unknown action: ${msg.type}`
+                });
+                break;
         }
     }
-    else if (msg.type === 'cancel-export') {
-        console.log('Export canceled by user');
+    catch (error) {
+        console.error(`💥 Error handling message type "${msg.type}":`, error);
+        console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+        figma.ui.postMessage({
+            type: 'error',
+            message: `Operation failed: ${error instanceof Error ? error.message : String(error)}`
+        });
     }
 };
 async function handleExport(format, source) {
@@ -1045,6 +1552,37 @@ async function handleExport(format, source) {
     }
     else {
         throw new Error(`Unknown export source: ${source}`);
+    }
+}
+async function handleFilePreview(format, source) {
+    console.log(`Starting file preview: ${format} from ${source}`);
+    if (source === 'variables') {
+        const preview = await exportService_1.ExportService.previewFiles(format);
+        figma.ui.postMessage(Object.assign({ type: 'file-preview', format,
+            source }, preview));
+    }
+    else {
+        throw new Error(`File preview not supported for source: ${source}`);
+    }
+}
+async function handleSelectedExport(format, source, selectedFiles) {
+    console.log(`Starting selected export: ${format} from ${source}`);
+    console.log(`Selected files: ${selectedFiles.join(', ')}`);
+    if (source === 'variables') {
+        await exportService_1.ExportService.exportSelectedFiles(format, selectedFiles);
+    }
+    else {
+        throw new Error(`Selected export not supported for source: ${source}`);
+    }
+}
+async function handleSelectedExportDirect(format, source, selectedFiles) {
+    console.log(`Starting direct selected export: ${format} from ${source}`);
+    console.log(`Selected files: ${selectedFiles.join(', ')}`);
+    if (source === 'variables') {
+        await exportService_1.ExportService.exportSelectedFilesDirect(format, selectedFiles);
+    }
+    else {
+        throw new Error(`Direct selected export not supported for source: ${source}`);
     }
 }
 async function init() {

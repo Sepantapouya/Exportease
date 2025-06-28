@@ -71,8 +71,29 @@ export interface AnalysisResult {
   breakdown: ExportBreakdown;
 }
 
-export type UIMessage = ExportMessage | CancelMessage;
-export type PluginResponse = ErrorMessage | ExportStatusMessage | ExportMultiFileMessage | ExportSingleFileMessage;
+export interface UIMessage {
+  type: 'export' | 'preview-files' | 'export-selected' | 'export-selected-direct' | 'cancel-export' | 'check-exports';
+  format?: string;
+  source?: string;
+  selectedFiles?: string[];
+}
+
+export interface FilePreviewMessage {
+  type: 'file-preview';
+  format: string;
+  source: string;
+  files: Array<{
+    filename: string;
+    collection: string;
+    mode: string;
+    estimated_size: string;
+    tokens_count: number;
+  }>;
+  total_collections: number;
+  total_modes: number;
+}
+
+export type PluginResponse = ErrorMessage | ExportStatusMessage | ExportMultiFileMessage | ExportSingleFileMessage | FilePreviewMessage;
 
 export interface ExportMultiFileMessage {
   type: 'export-multi-file';
@@ -84,7 +105,7 @@ export interface ExportMultiFileMessage {
 }
 
 export interface ExportSingleFileMessage {
-  type: 'export-complete';
+  type: 'export-ready';
   format: string;
   filename: string;
   content: string;

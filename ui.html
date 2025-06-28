@@ -179,13 +179,13 @@
     }
 
     .format-btn.success {
-      background: #28a745;
-      border-color: #28a745;
+      background: #d2145a;
+      border-color: #d2145a;
     }
 
     .format-btn.success:hover:not(:disabled) {
-      background: #1e7e34;
-      border-color: #1e7e34;
+      background: #b3124a;
+      border-color: #b3124a;
     }
 
     .result-message {
@@ -248,13 +248,13 @@
     }
 
     .export-actions {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
+      display: flex;
       gap: 8px;
       margin-bottom: 16px;
     }
 
     .action-btn {
+      flex: 1;
       height: 32px;
       border: 1px solid #4a4e57;
       border-radius: 4px;
@@ -397,11 +397,258 @@
     }
 
     .progress-bar {
-      background: linear-gradient(90deg, #28a745, #20c997);
+      background: linear-gradient(90deg, #d2145a, #b3124a);
       height: 100%;
       width: 0%;
       transition: width 0.3s ease;
       border-radius: 4px;
+    }
+
+    .file-selection-section {
+      padding: 16px;
+      border: 1px solid #3a3e47;
+      border-radius: 6px;
+    }
+
+    .section-header {
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .section-description {
+      font-size: 11px;
+      color: #b0b0b0;
+    }
+
+    .file-selection-controls {
+      margin-bottom: 16px;
+    }
+
+    .control-btn {
+      background: #333740;
+      border: 1px solid #4a4e57;
+      border-radius: 4px;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 500;
+      padding: 4px 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .control-btn:hover:not(:disabled) {
+      background: #3d4149;
+      border-color: #5a5e67;
+    }
+
+    .control-btn:disabled {
+      background: #2a2e36;
+      color: #666;
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    .file-list {
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid #3a3e47;
+      border-radius: 4px;
+      background: #2a2e36;
+    }
+
+    .file-item {
+      display: flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-bottom: 1px solid #3a3e47;
+      transition: background-color 0.2s ease;
+    }
+
+    .file-item:last-child {
+      border-bottom: none;
+    }
+
+    .file-item:hover {
+      background: #333740;
+    }
+
+    .file-checkbox {
+      margin-right: 8px;
+      width: 14px;
+      height: 14px;
+      cursor: pointer;
+    }
+
+    .file-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .file-name {
+      font-size: 11px;
+      font-weight: 500;
+      color: #fff;
+      margin-bottom: 2px;
+    }
+
+    .file-meta {
+      font-size: 9px;
+      color: #888;
+      display: flex;
+      gap: 8px;
+    }
+
+    .file-collection {
+      color: #4dabf7;
+    }
+
+    .file-mode {
+      color: #69db7c;
+    }
+
+    .file-size {
+      color: #ffd43b;
+    }
+
+    .file-selection-controls {
+      margin-bottom: 12px;
+      padding: 8px;
+      background: #333740;
+      border-radius: 4px;
+    }
+
+    .control-buttons-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .control-btn {
+      flex: 1;
+      background: #4a4e57;
+      border: 1px solid #5a5e67;
+      border-radius: 3px;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 500;
+      padding: 6px 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: center;
+    }
+
+    .control-btn:hover:not(:disabled) {
+      background: #5a5e67;
+      border-color: #6a6e77;
+    }
+
+    .selection-count {
+      font-size: 10px;
+      color: #b0b0b0;
+      font-weight: 500;
+      text-align: center;
+      padding-top: 4px;
+    }
+
+    .export-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      padding-top: 12px;
+      border-top: 1px solid #3a3e47;
+    }
+
+    .export-btn {
+      flex: 1;
+      background: #d2145a;
+      border: 1px solid #d2145a;
+      border-radius: 4px;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 10px 16px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .export-btn:hover:not(:disabled) {
+      background: #b3124a;
+      border-color: #b3124a;
+      transform: translateY(-1px);
+    }
+
+    .export-btn:disabled {
+      background: #4a4e57;
+      border-color: #4a4e57;
+      color: #888;
+      cursor: not-allowed;
+      opacity: 0.6;
+      transform: none;
+    }
+
+    .cancel-btn {
+      background: transparent;
+      border: 1px solid #6c757d;
+      border-radius: 4px;
+      color: #6c757d;
+      font-size: 11px;
+      font-weight: 500;
+      padding: 10px 16px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .cancel-btn:hover {
+      background: #6c757d;
+      color: #fff;
+    }
+
+    .section-header {
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+
+    .section-description {
+      font-size: 10px;
+      color: #b0b0b0;
+      line-height: 1.3;
+    }
+
+    .file-selection-section {
+      margin: 16px 0;
+      padding: 16px;
+      border: 1px solid #3a3e47;
+      border-radius: 6px;
+      background: #21252b;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
   </style>
   <link href="https://fonts.googleapis.com/css?family=Inter:400,500,600&display=swap" rel="stylesheet">
@@ -452,6 +699,33 @@
             JavaScript
           </button>
         </div>
+      </div>
+    </div>
+
+    <!-- File Selection Interface -->
+    <div class="file-selection-section" id="fileSelectionSection" style="display: none;">
+      <div class="section-header">
+        <h3 class="section-title">📁 Select Files to Export</h3>
+        <p class="section-description">Choose which files you want to include in your export</p>
+      </div>
+      
+      <div class="file-selection-controls">
+        <div class="control-buttons-row">
+          <button class="control-btn" id="selectAllBtn">Select All</button>
+          <button class="control-btn" id="deselectAllBtn">Deselect All</button>
+        </div>
+        <div class="selection-count" id="selectionCount">0 files selected</div>
+      </div>
+
+      <div class="file-list" id="fileList">
+        <!-- Files will be populated dynamically -->
+      </div>
+
+      <div class="export-actions">
+        <button class="export-btn" id="confirmExportBtn" disabled>
+          <span class="export-text">Download Selected Files</span>
+        </button>
+        <button class="cancel-btn" id="cancelSelectionBtn">Cancel</button>
       </div>
     </div>
 
@@ -773,14 +1047,177 @@
         case 'export-progress':
           updateProgress(msg.current, msg.total, msg.percentage);
           break;
+        case 'file-preview':
+          hideProgressToast();
+          showFileSelection(msg.format, msg.source, msg);
+          break;
         case 'error':
           hideProgressToast();
           showResult(msg.message, 'error');
           setLoading(false);
           enableExportButtons();
           break;
+        case 'download-single-file':
+          console.log('=== RECEIVED DIRECT SINGLE FILE DOWNLOAD ===');
+          hideProgressToast();
+          setLoading(false);
+          enableExportButtons();
+          if (msg.content && msg.filename) {
+            downloadFile(msg.content, msg.filename);
+            showResult(`Downloaded ${msg.filename} successfully!`, 'success');
+          } else {
+            showResult('Download failed: Invalid file data', 'error');
+          }
+          break;
+        case 'download-multi-file':
+          console.log('=== RECEIVED DIRECT MULTI FILE DOWNLOAD ===');
+          hideProgressToast();
+          setLoading(false);
+          enableExportButtons();
+          if (msg.files && Object.keys(msg.files).length > 0) {
+            downloadMultipleFiles(msg.files, msg.format);
+            const fileCount = Object.keys(msg.files).length;
+            showResult(`Downloaded ${fileCount} files as ZIP successfully!`, 'success');
+          } else {
+            showResult('Download failed: No files to download', 'error');
+          }
+          break;
       }
     };
+
+    // File selection functionality
+    let currentFilePreview = null;
+    let selectedFiles = new Set();
+    let currentExportFormat = null;
+    let currentExportSource = null;
+
+    function showFileSelection(format, source, preview) {
+      currentFilePreview = preview;
+      currentExportFormat = format;
+      currentExportSource = source;
+      
+      // Hide export formats and show file selection
+      document.querySelector('.export-formats').style.display = 'none';
+      document.getElementById('fileSelectionSection').style.display = 'block';
+      
+      // Populate file list
+      populateFileList(preview.files);
+      
+      // Select all files by default
+      selectAllFiles();
+      
+      // Update selection count
+      updateSelectionCount();
+    }
+
+    function populateFileList(files) {
+      const fileList = document.getElementById('fileList');
+      fileList.innerHTML = '';
+      
+      files.forEach(file => {
+        const fileItem = document.createElement('div');
+        fileItem.className = 'file-item';
+        
+        fileItem.innerHTML = `
+          <input type="checkbox" class="file-checkbox" data-filename="${file.filename}" checked>
+          <div class="file-info">
+            <div class="file-name">${file.filename}</div>
+            <div class="file-meta">
+              <span class="file-collection">${file.collection}</span>
+              <span class="file-mode">${file.mode}</span>
+              <span class="file-size">${file.estimated_size}</span>
+              <span>${file.tokens_count} tokens</span>
+            </div>
+          </div>
+        `;
+        
+        const checkbox = fileItem.querySelector('.file-checkbox');
+        checkbox.addEventListener('change', handleFileCheckboxChange);
+        
+        fileList.appendChild(fileItem);
+      });
+    }
+
+    function handleFileCheckboxChange(event) {
+      const filename = event.target.dataset.filename;
+      
+      if (event.target.checked) {
+        selectedFiles.add(filename);
+      } else {
+        selectedFiles.delete(filename);
+      }
+      
+      updateSelectionCount();
+      updateExportButtonState();
+    }
+
+    function selectAllFiles() {
+      selectedFiles.clear();
+      document.querySelectorAll('.file-checkbox').forEach(checkbox => {
+        checkbox.checked = true;
+        selectedFiles.add(checkbox.dataset.filename);
+      });
+      updateExportButtonState();
+    }
+
+    function deselectAllFiles() {
+      selectedFiles.clear();
+      document.querySelectorAll('.file-checkbox').forEach(checkbox => {
+        checkbox.checked = false;
+      });
+      updateExportButtonState();
+    }
+
+    function updateSelectionCount() {
+      const count = selectedFiles.size;
+      const total = currentFilePreview ? currentFilePreview.files.length : 0;
+      document.getElementById('selectionCount').textContent = `${count} of ${total} files selected`;
+    }
+
+    function updateExportButtonState() {
+      const exportBtn = document.getElementById('confirmExportBtn');
+      exportBtn.disabled = selectedFiles.size === 0;
+    }
+
+    function hideFileSelection() {
+      document.getElementById('fileSelectionSection').style.display = 'none';
+      document.querySelector('.export-formats').style.display = 'block';
+      
+      // Reset state
+      currentFilePreview = null;
+      selectedFiles.clear();
+      currentExportFormat = null;
+      currentExportSource = null;
+    }
+
+    function confirmExport() {
+      console.log('=== CONFIRM EXPORT CALLED ===');
+      console.log('Selected files count:', selectedFiles.size);
+      console.log('Selected files:', Array.from(selectedFiles));
+      
+      if (selectedFiles.size === 0) {
+        showResult('Please select at least one file to export', 'error');
+        return;
+      }
+      
+      // Send direct export request with selected files (bypass preview)
+      console.log('Sending direct export request...');
+      parent.postMessage({
+        pluginMessage: {
+          type: 'export-selected-direct',
+          format: currentExportFormat,
+          source: currentExportSource,
+          selectedFiles: Array.from(selectedFiles)
+        }
+      }, '*');
+      
+      // Hide file selection
+      hideFileSelection();
+      
+      // Show loading state  
+      showResult('Preparing download...', 'info');
+      setLoading(true);
+    }
 
     function updateExportStatus(hasExportsAvailable, stylesCount, variablesCount, breakdown) {
       hasExports = hasExportsAvailable;
@@ -861,16 +1298,48 @@
     }
 
     function exportToFormat(format) {
+      console.log('=== EXPORT TO FORMAT CALLED ===');
+      console.log('Format:', format);
+      console.log('Current source:', currentSource);
+      console.log('Has exports:', hasExports);
+      
       if (!hasExports) {
         showResult('No exports available', 'error');
         return;
       }
       
       if (!currentSource) {
-        showResult('Please select an export source first', 'error');
-        return;
+        console.warn('No current source set, defaulting to variables');
+        currentSource = 'variables';
       }
       
+      // Clear previous format button selection
+      document.querySelectorAll('[data-format]').forEach(btn => {
+        btn.classList.remove('success', 'primary');
+      });
+      
+      // Show file selection interface for variables
+      if (currentSource === 'variables') {
+        console.log('Processing variables export...');
+        showResult('Loading files preview...', 'info');
+        
+        // Request file preview
+        console.log('Sending preview-files message...');
+        parent.postMessage({ 
+          pluginMessage: { 
+            type: 'preview-files', 
+            format: format,
+            source: currentSource
+          } 
+        }, '*');
+      } else {
+        console.log('Processing styles export...');
+        // For styles, export directly (legacy behavior)
+        directExport(format);
+      }
+    }
+
+    function directExport(format) {
       setLoading(true);
       currentFormat = format;
       exportCanceled = false;
@@ -931,6 +1400,11 @@
       
       // Enable export buttons
       enableExportButtons();
+      
+      // Clear all format button highlights first
+      document.querySelectorAll('[data-format]').forEach(btn => {
+        btn.classList.remove('success', 'primary');
+      });
       
       // Highlight current button
       const formatBtn = document.querySelector(`[data-format="${format}"]`);
@@ -1005,8 +1479,8 @@
       // Enable export buttons (but don't clear multi-file data)
       document.querySelectorAll('.format-btn').forEach(btn => {
         btn.disabled = false;
-        btn.classList.remove('success', 'primary');
         if (btn.dataset.format) {
+          btn.classList.remove('success', 'primary');
           const originalText = getFormatName(btn.dataset.format);
           btn.textContent = originalText;
         }
@@ -1319,7 +1793,7 @@ ${'='.repeat(80)}
         position: fixed;
         top: 20px;
         right: 20px;
-        background: ${type === 'success' ? '#4CAF50' : '#f44336'};
+        background: ${type === 'success' ? '#d2145a' : '#f44336'};
         color: white;
         padding: 12px 24px;
         border-radius: 4px;
@@ -1390,8 +1864,9 @@ ${'='.repeat(80)}
       
       document.querySelectorAll('.format-btn').forEach(btn => {
         btn.disabled = false;
-        btn.classList.remove('success', 'primary');
+        // Only remove success/primary classes from format buttons, not source buttons
         if (btn.dataset.format) {
+          btn.classList.remove('success', 'primary');
           const originalText = getFormatName(btn.dataset.format);
           btn.textContent = originalText;
         }
@@ -1404,6 +1879,22 @@ ${'='.repeat(80)}
       // Clear multi-file export data
       window.currentMultiFileExport = null;
     }
+
+    // File selection event listeners
+    document.getElementById('selectAllBtn').addEventListener('click', () => {
+      selectAllFiles();
+      updateSelectionCount();
+      updateExportButtonState();
+    });
+
+    document.getElementById('deselectAllBtn').addEventListener('click', () => {
+      deselectAllFiles();
+      updateSelectionCount();
+      updateExportButtonState();
+    });
+
+    document.getElementById('confirmExportBtn').addEventListener('click', confirmExport);
+    document.getElementById('cancelSelectionBtn').addEventListener('click', hideFileSelection);
 
     // Request initial export check
     parent.postMessage({ pluginMessage: { type: 'check-exports' } }, '*');

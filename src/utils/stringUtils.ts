@@ -3,31 +3,60 @@ export class StringUtils {
    * Convert string to slug format (lowercase, dashes, no special chars)
    */
   static slugify(text: string): string {
+    if (!text || typeof text !== 'string') {
+      console.warn('Invalid input for slugify:', text);
+      return 'invalid-input';
+    }
+    
     return text
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '');
+      .replace(/^-+|-+$/g, '')
+      || 'empty'; // fallback for empty results
   }
 
   /**
    * Convert token name to CSS variable format
    */
   static tokenToCSSVariable(name: string): string {
+    if (!name || typeof name !== 'string') {
+      console.warn('Invalid input for tokenToCSSVariable:', name);
+      return 'invalid-token';
+    }
+    
     return name
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '');
+      .replace(/^-+|-+$/g, '')
+      || 'empty-token'; // fallback for empty results
   }
 
   /**
    * Convert token name to JavaScript variable format
    */
   static tokenToJSVariable(name: string): string {
-    return name
+    if (!name || typeof name !== 'string') {
+      console.warn('Invalid input for tokenToJSVariable:', name);
+      return 'invalidToken';
+    }
+    
+    const result = name
       .replace(/[^a-zA-Z0-9]+/g, '_')
       .replace(/^[^a-zA-Z_]/, '_')
       .replace(/_{2,}/g, '_')
       .replace(/^_+|_+$/g, '');
+      
+    // Ensure result is valid JS identifier
+    if (!result) {
+      return 'emptyToken';
+    }
+    
+    // If it starts with a number, prefix with underscore
+    if (/^\d/.test(result)) {
+      return '_' + result;
+    }
+    
+    return result;
   }
 
   /**
@@ -294,7 +323,7 @@ export class StringUtils {
       }
     });
     
-    structure.averageDepth = totalDepth / tokens.length;
+    structure.averageDepth = tokens.length > 0 ? totalDepth / tokens.length : 0;
     
     // Determine token type priority:
     // 1. Simple numeric (color-blue-1, spacing-100) - most common design token pattern

@@ -11,10 +11,27 @@ export class CSSGenerator extends BaseGenerator {
   static generateCollectionCSS(collection: CollectionGroup): GeneratedFiles {
     const files: GeneratedFiles = {};
     
+    if (!collection || !collection.name || !collection.modes) {
+      console.warn('Invalid collection provided to CSS generator:', collection);
+      return files;
+    }
+    
     collection.modes.forEach(mode => {
+      if (!mode || !mode.name || !mode.tokens) {
+        console.warn(`Skipping invalid mode in collection "${collection.name}":`, mode);
+        return;
+      }
+      
       const fileName = `${StringUtils.slugify(collection.name)}-${StringUtils.slugify(mode.name)}.css`;
-      const content = this.generateCSS(mode.tokens, collection.name, mode.name);
-      files[fileName] = content;
+      
+      if (files[fileName]) {
+        console.warn(`Duplicate filename detected: ${fileName}. Adding suffix.`);
+        const timestamp = Date.now();
+        const newFileName = `${StringUtils.slugify(collection.name)}-${StringUtils.slugify(mode.name)}-${timestamp}.css`;
+        files[newFileName] = this.generateCSS(mode.tokens, collection.name, mode.name);
+      } else {
+        files[fileName] = this.generateCSS(mode.tokens, collection.name, mode.name);
+      }
     });
 
     return files;
@@ -40,11 +57,27 @@ export class CSSGenerator extends BaseGenerator {
   }
 
   private static generateCSS(tokens: Token[], collectionName: string, modeName: string): string {
+    if (!tokens || !Array.isArray(tokens)) {
+      console.warn('Invalid tokens provided to CSS generator');
+      return `/* No valid tokens found for ${collectionName} - ${modeName} */\n:root {\n}\n`;
+    }
+    
+    if (!collectionName || !modeName) {
+      console.warn('Missing collection or mode name for CSS generation');
+      return `/* Missing collection/mode information */\n:root {\n}\n`;
+    }
+    
     let css = `/* ${this.generateFileComment(collectionName, modeName)} */\n\n:root {\n`;
     
     tokens.forEach(token => {
+      if (!token || !token.name || token.value === undefined || token.value === null) {
+        console.warn('Skipping invalid token:', token);
+        return;
+      }
+      
       const cssVar = StringUtils.tokenToCSSVariable(token.name);
-      css += `  --${cssVar}: ${token.value};\n`;
+      const escapedValue = String(token.value).replace(/"/g, '\\"');
+      css += `  --${cssVar}: ${escapedValue};\n`;
     });
     
     css += `}\n`;
