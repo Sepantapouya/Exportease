@@ -1,6 +1,6 @@
 {
   "name": "exportease",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Export local Figma styles and variables to developer-friendly formats",
   "main": "dist/main.js",
   "scripts": {

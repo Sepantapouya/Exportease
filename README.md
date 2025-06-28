@@ -6,8 +6,22 @@ Export Figma variables and styles to 3 developer formats with intelligent organi
 
 ![ExportEase Plugin](https://img.shields.io/badge/Figma-Plugin-FF6366?style=flat-square&logo=figma)
 ![License](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)
-![Version](https://img.shields.io/badge/version-1.0.0-green.svg?style=flat-square)
+![Version](https://img.shields.io/badge/version-1.1.0-green.svg?style=flat-square)
 ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat-square&logo=typescript&logoColor=white)
+
+## 🆕 What's New in v1.1.0
+
+### 🎯 **Direct Download Feature**
+- **Skip the preview, get your files instantly!** New direct download option bypasses the preview step
+- Click "Download Selected Files" and get your tokens immediately as individual files or ZIP archives
+- Perfect for CI/CD workflows and rapid prototyping
+
+### 🔧 **Enhanced Export Experience**
+- **Smart file organization** - automatically groups exports by collections and modes
+- **Comprehensive error handling** with detailed debugging information  
+- **Improved state management** - no more stuck buttons or broken workflows
+- **Better performance** with optimized token collection and analysis
+- **Robust edge case handling** - works reliably with complex design systems
 
 ## 🚀 Key Features
 
@@ -22,17 +36,27 @@ Export Figma variables and styles to 3 developer formats with intelligent organi
 - **JavaScript** - ES6 modules with TypeScript support
 - **Tailwind CSS** - Config-ready theme extensions
 
+### ⚡ **Streamlined Workflow**
+- **Two Export Modes**:
+  - **Preview Mode**: See exactly what you'll get before downloading
+  - **Direct Download**: Instant downloads for rapid iteration
+- **Selective Export**: Choose exactly which collections and modes you need
+- **Batch Export**: Download all collections at once as organized ZIP files
+- **One-Click Downloads**: Instant ZIP files with import instructions
+
 ### 🔄 **Advanced Token Processing**
 - **Variable Aliases**: Automatically resolves CSS `var()` references
 - **Type-Safe Values**: Proper color, spacing, and typography formatting
 - **Multi-Collection Support**: Handles complex design systems
 - **ZIP Downloads**: Exports multiple files as organized archives
+- **Null Safety**: Robust handling of empty or invalid tokens
 
 ### 💡 **Developer Experience**
-- **Preview Before Export**: See exactly what you'll get
-- **One-Click Downloads**: Instant ZIP files with import instructions
+- **Preview Before Export**: See exactly what you'll get (optional)
+- **Instant Downloads**: Direct download option for fast workflows
 - **Production Ready**: Optimized output for real-world development
 - **Modern Architecture**: Built with TypeScript and Webpack
+- **Comprehensive Debugging**: Detailed console logs for troubleshooting
 
 ## 📁 Example Output Structure
 
@@ -135,8 +159,15 @@ Only needed if you want to modify the plugin or install unreleased versions:
 2. **Run ExportEase** from the Plugins menu
 3. **Choose Export Source**: Variables or Styles  
 4. **Select Format**: CSS, JS, or Tailwind
-5. **Download**: Get individual files or ZIP archives
+5. **Choose Export Mode**:
+   - **Direct Download**: Select files and download immediately
+   - **Preview Mode**: See generated code before downloading
 6. **Import in your code** using the included instructions
+
+### Export Workflows
+- **Quick Export**: Select format → Select files → Download instantly
+- **Review Export**: Select format → Preview files → Review code → Download
+- **Batch Export**: Select "All Files" for complete design system export
 
 ### File Organization
 - **Single Collection + Single Mode** → Single file
@@ -159,11 +190,11 @@ cd exportease
 # Install dependencies
 npm install
 
-# Start development mode
-npm run dev
-
 # Build for production  
 npm run build
+
+# Build in watch mode for development
+npm run build -- --watch
 ```
 
 ### Project Architecture
@@ -234,11 +265,39 @@ Contributions are welcome! This is an open-source project built for the design a
 - Test with real Figma files
 - Update documentation for new features
 
+## 🔧 Troubleshooting
+
+### Common Issues & Solutions
+
+**"No exports available"**
+- Ensure you have local variables or styles created in your Figma file
+- Variables must have values assigned in at least one mode
+- Check that you're not using only remote/library variables
+
+**"No tokens could be collected"**
+- Variables need actual values, not just empty placeholders
+- Ensure variables are published/set in the current mode
+- Check browser console (F12) for detailed error messages
+
+**Export button not working**
+- Refresh the plugin (close and reopen)
+- Ensure you've selected a source (Variables or Styles)
+- Check that your Figma file contains the selected content type
+
+**Files download but are empty**
+- Verify your variable collections have valid modes
+- Check that variables have non-null values assigned
+- Review console logs for specific errors
+
+### Debug Mode
+Open your browser console (F12) when using the plugin to see detailed logs that help identify issues.
+
 ## 🐛 Known Limitations
 
 - **Figma Desktop Required**: Browser version doesn't support plugin development
 - **Complex Gradients**: Some gradient types may export as simplified values
 - **Large Token Sets**: Files with 1000+ tokens may take a few seconds to process
+- **Variable References**: Some complex alias chains may need manual review
 
 ## 🙏 Acknowledgments
 
@@ -259,12 +318,21 @@ MIT License - feel free to use in personal and commercial projects.
 
 ---
 
+## 📚 Documentation & Support
+
+- **📖 Documentation**: Complete guide available in this README
+- **🐛 Bug Reports**: [Create an issue](https://github.com/sepantapouya/exportease/issues)
+- **💡 Feature Requests**: [Submit suggestions](https://github.com/sepantapouya/exportease/discussions)
+- **📝 Changelog**: See [releases](https://github.com/sepantapouya/exportease/releases) for version history
+
 ## 🌟 Get ExportEase
 
 - **📱 Figma Community**: [Install ExportEase](https://figma.com/community) (Search "ExportEase")
 - **💻 GitHub**: [Source Code & Issues](https://github.com/sepantapouya/exportease)
-- **📖 Documentation**: Available in this README
+- **🚀 Latest Release**: [Download v1.1.0](https://github.com/sepantapouya/exportease/releases/latest)
 
 **⭐ Star this repo if ExportEase helped streamline your design-to-code workflow!**
+
+---
 
 Made with ❤️ by Sepanta Pouya for designers and developers who build the future of digital products. 
